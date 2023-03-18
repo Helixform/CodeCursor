@@ -1,6 +1,6 @@
 {
     "name": "aicursor",
-    "displayName": "CodeCursor",
+    "displayName": "Code Cursor",
     "description": "cursor.so integration for Visual Studio Code",
     "version": "0.0.2",
     "publisher": "ktiays",
@@ -22,10 +22,27 @@
         "commands": [
             {
                 "command": "aicursor.generateCode",
-                "title": "Cursor: Generate Code",
+                "title": "Code Cursor: Generate Code",
                 "when": "editorFocus"
             }
-        ]
+        ],
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "aicursor",
+                    "title": "Code Cursor",
+                    "icon": "icon.png"
+                }
+            ]
+        },
+        "views": {
+            "aicursor": [
+                {
+                    "id": "aicursor",
+                    "name": "Code Cursor"
+                }
+            ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run package",
