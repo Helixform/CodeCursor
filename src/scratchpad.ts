@@ -1,28 +1,15 @@
 import * as vscode from "vscode";
 
-class ScratchpadDocument {
-    id: string;
-    contents: string;
-
-    constructor(id: string) {
-        this.id = id;
-        this.contents = "";
-    }
-
-    appendText(text: string) {
-        this.contents += text;
-        getScratchpadManager().notifyDocumentChange(this.id);
-    }
-}
+import { ResultStream } from "./generate/result-stream";
 
 const URI_SCHEME = "ccsp";
-export function createUri(docId: string): vscode.Uri {
-    return vscode.Uri.parse(`${URI_SCHEME}:cursor-reply?${docId}`);
+export function createUri(docId: string, orig: boolean = false): vscode.Uri {
+    return vscode.Uri.parse(`${URI_SCHEME}:${orig ? "orig" : "new"}?${docId}`);
 }
 
 export class ScratchpadManager implements vscode.TextDocumentContentProvider {
     onDidChange?: vscode.Event<vscode.Uri> | undefined;
-    documents: Map<string, ScratchpadDocument> = new Map();
+    documents: Map<string, Scratchpad> = new Map();
     currentId = 0;
     _didChangeEventEmitter = new vscode.EventEmitter<vscode.Uri>();
 
@@ -37,21 +24,16 @@ export class ScratchpadManager implements vscode.TextDocumentContentProvider {
         );
     }
 
-    addScratchpad(contents?: string): string {
+    addScratchpad(scratchpad: Scratchpad): string {
         ++this.currentId;
 
         const docId = `${this.currentId}`;
-        const doc = new ScratchpadDocument(docId);
-        this.documents.set(docId, doc);
-
-        if (contents) {
-            doc.contents = contents;
-        }
+        this.documents.set(docId, scratchpad);
 
         return docId;
     }
 
-    getScratchpadDocument(docId: string): ScratchpadDocument | undefined {
+    getScratchpad(docId: string): Scratchpad | undefined {
         return this.documents.get(docId);
     }
 
@@ -69,6 +51,9 @@ export class ScratchpadManager implements vscode.TextDocumentContentProvider {
         if (!doc) {
             return null;
         }
+        if (uri.path === "orig") {
+            return doc.originalContents;
+        }
         return doc.contents;
     }
 }
@@ -78,38 +63,21 @@ export function getScratchpadManager(): ScratchpadManager {
     return scratchpadManager;
 }
 
-export class Scratchpad {
-    document: ScratchpadDocument;
+export class Scratchpad implements ResultStream<string> {
+    id: string;
+    originalContents: string;
+    contents: string;
 
-    constructor(docId: string) {
-        const document = scratchpadManager.getScratchpadDocument(docId);
-        if (!document) {
-            throw new Error(`Document with id "${docId}" not found`);
-        }
-        this.document = document;
+    constructor(originalContents: string) {
+        this.id = scratchpadManager.addScratchpad(this);
+        this.originalContents = originalContents;
+        this.contents = "";
     }
 
-    async open(): Promise<void> {
-        const doc = await vscode.workspace.openTextDocument(
-            createUri(this.document.id)
-        );
-        await vscode.window.showTextDocument(doc, {
-            viewColumn: vscode.ViewColumn.Beside,
-            preserveFocus: true,
-        });
+    write(text: string) {
+        this.contents += text;
+        scratchpadManager.notifyDocumentChange(this.id);
     }
 
-    close() {
-        const uriString = createUri(this.document.id).toString();
-        for (let editor of vscode.window.visibleTextEditors) {
-            if (editor.document.uri.toString() === uriString) {
-                editor.hide();
-                return;
-            }
-        }
-    }
-
-    appendText(text: string) {
-        this.document.appendText(text);
-    }
+    end(): void {}
 }

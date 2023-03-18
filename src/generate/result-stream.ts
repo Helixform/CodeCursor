@@ -1,9 +1,4 @@
-export class ResultStream<T> {
-    write = (value: T) => {
-        console.log(value);
-    };
-
-    end = () => {
-        console.log("finished");
-    };
+export interface ResultStream<T> {
+    write(value: T): void;
+    end(): void;
 }
