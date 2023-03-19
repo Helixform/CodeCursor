@@ -55,6 +55,8 @@
         "webpack-cli": "^5.0.1"
     },
     "dependencies": {
-        "node-fetch": "^3.3.1"
+        "@types/uuid": "^9.0.1",
+        "node-fetch": "^3.3.1",
+        "uuid": "^9.0.0"
     }
 }

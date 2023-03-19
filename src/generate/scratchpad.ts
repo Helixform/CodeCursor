@@ -49,7 +49,6 @@ export class ScratchpadManager implements vscode.TextDocumentContentProvider {
         uri: vscode.Uri,
         _token: vscode.CancellationToken
     ): vscode.ProviderResult<string> {
-        console.log(uri);
         const docId = uri.query;
         const doc = this.documents.get(docId);
         if (!doc) {

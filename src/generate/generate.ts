@@ -2,6 +2,12 @@ import * as vscode from "vscode";
 import fetch from "node-fetch";
 import path = require("path");
 import { ResultStream } from "./result-stream";
+import { v4 as uuidv4 } from "uuid";
+import {
+    BotMessage,
+    BotMessageType,
+    interruptedBotMessage,
+} from "./bot-message";
 
 const headers = {
     ["authority"]: "aicursor.com",
@@ -22,7 +28,6 @@ export async function generateCode(
 
     const selection = editor.selection;
     const selectionText = editor.document.getText(selection);
-    let currentCursor = editor.selection.active;
 
     const precedingCode = editor.document.getText(
         new vscode.Range(
@@ -62,6 +67,11 @@ export async function generateCode(
         return blocks;
     }
 
+    const messageType =
+        selectionText.length > 0
+            ? BotMessageType.edit
+            : BotMessageType.generate;
+
     const requestBody = {
         userRequest: {
             message: prompt,
@@ -74,11 +84,11 @@ export async function generateCode(
             copilotCodeBlocks: [],
             customCodeBlocks: [],
             codeBlockIdentifiers: [],
-            msgType: selectionText.length > 0 ? "edit" : "generate",
+            msgType: messageType,
             maxOrigLine: null,
         },
         userMessages: [],
-        botMessages: [],
+        botMessages: [] as BotMessage[],
         contextType: "copilot",
         rootPath: vscode.workspace.workspaceFolders?.[0].uri.fsPath,
     };
@@ -90,8 +100,36 @@ export async function generateCode(
     let finished = false;
     // If the conversation was interrupted, we need to send a "continue" request.
     let interrupted = false;
+    // Handle the SSE stream.
+    let messageStarted = false;
+    let firstNewlineDropped = false;
 
+    let conversationId: string | null = null;
+    // The last message received from the server.
+    let previousMessage: string = "";
+    let lastToken = "";
+
+    let counter = 0;
     while (!finished) {
+        if (interrupted) {
+            counter++;
+            // Generate an UUID as conversation ID.
+            if (!conversationId) {
+                conversationId = uuidv4();
+            }
+            const botMessage = interruptedBotMessage(
+                messageType,
+                conversationId,
+                previousMessage,
+                lastToken,
+                filePath
+            );
+            requestBody.botMessages = [botMessage];
+            if (counter >= 2) {
+                debugger;
+            }
+        }
+
         const resp = await fetch(
             `https://aicursor.com/${interrupted ? "continue" : "conversation"}`,
             {
@@ -108,9 +146,8 @@ export async function generateCode(
             return;
         }
 
-        // Handle the SSE stream.
-        let messageStarted = false;
-        let firstNewlineDropped = false;
+        // Reset the interrupted flag.
+        interrupted = false;
 
         for await (const chunk of body) {
             const lines = chunk
@@ -120,21 +157,24 @@ export async function generateCode(
             let messageEnded = false;
             for (const line of lines) {
                 if (!line.startsWith('data: "')) {
-                    console.log(`Oh god ${line}`);
                     continue;
                 }
                 // A string can be JSON to parse.
                 let data = JSON.parse(line.slice("data: ".length)) as string;
+                console.log(`${data}`);
                 if (data === "<|BEGIN_message|>") {
                     messageStarted = true;
                     continue;
                 } else if (data.includes("<|END_interrupt|>")) {
                     interrupted = true;
+                    lastToken = data;
                     // `END_interrupt` is included in valid data,
                     // we cannot discard it.
                     data = data.replace("<|END_interrupt|>", "");
                 } else if (data === "<|END_message|>") {
-                    finished = true;
+                    if (!interrupted) {
+                        finished = true;
+                    }
                     // We cannot exit the loop here because we're in a nested loop.
                     messageEnded = true;
                     break;
@@ -147,12 +187,14 @@ export async function generateCode(
                         firstNewlineDropped = true;
                         continue;
                     }
+                    console.log(`handle data: ${data}`);
                     resultStream.write(data);
+                    previousMessage += data;
                 }
             }
             // If we've reached the end of the message, break out of the loop.
             if (messageEnded) {
-                break;
+                //break;
             }
         }
     }
