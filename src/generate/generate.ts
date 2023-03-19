@@ -149,4 +149,6 @@ export async function generateCode(
             }
         }
     }
+
+    resultStream.end();
 }

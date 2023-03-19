@@ -1,10 +1,36 @@
 import * as vscode from "vscode";
-import { generateCode } from "./generate/generate";
-import {
-    Scratchpad,
-    getScratchpadManager,
-    createUri as createScratchpadUri,
-} from "./scratchpad";
+import { GenerateSession, getScratchpadManager } from "./generate";
+
+const globalState = {
+    activeSession: null as GenerateSession | null,
+};
+
+async function handleGenerateCodeCommand() {
+    const input = await vscode.window.showInputBox({
+        placeHolder: "Instructions for code to generate...",
+    });
+    if (!input) {
+        return;
+    }
+
+    // Get the current editor and selection.
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+    const selection = editor.selection;
+
+    // End the active session first.
+    const activeSession = globalState.activeSession;
+    if (activeSession) {
+        activeSession.dispose();
+    }
+
+    const session = new GenerateSession(input, selection, editor);
+    session.start();
+    session.showResult();
+    globalState.activeSession = session;
+}
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -14,52 +40,13 @@ export function activate(context: vscode.ExtensionContext) {
     // The commandId parameter must match the command field in package.json
     context.subscriptions.push(
         vscode.commands.registerCommand("aicursor.generateCode", () => {
-            vscode.window
-                .showInputBox({
-                    placeHolder: "Instructions for code to generate...",
-                })
-                .then((value) => {
-                    if (!value) {
-                        return;
-                    }
+            handleGenerateCodeCommand();
+        })
+    );
 
-                    // Get the current editor.
-                    const editor = vscode.window.activeTextEditor;
-                    if (!editor) {
-                        return;
-                    }
-
-                    const selection = editor.selection;
-                    const selectionText = editor.document.getText(selection);
-
-                    const scratchpad = new Scratchpad(selectionText);
-                    vscode.commands.executeCommand(
-                        "vscode.diff",
-                        createScratchpadUri(scratchpad.id, true),
-                        createScratchpadUri(scratchpad.id),
-                        null,
-                        {
-                            viewColumn: vscode.ViewColumn.Beside,
-                            preview: true,
-                        } as vscode.TextDocumentShowOptions
-                    );
-
-                    vscode.window.withProgress(
-                        {
-                            location: vscode.ProgressLocation.Window,
-                            title: "Generating code...",
-                            cancellable: true,
-                        },
-                        (_progress, token) => {
-                            return generateCode(
-                                value,
-                                editor,
-                                token,
-                                scratchpad
-                            );
-                        }
-                    );
-                });
+    context.subscriptions.push(
+        vscode.commands.registerCommand("aicursor.showLastResult", () => {
+            globalState.activeSession?.showResult();
         })
     );
 

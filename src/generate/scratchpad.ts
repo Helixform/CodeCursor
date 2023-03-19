@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { ResultStream } from "./generate/result-stream";
+import { ResultStream } from "./result-stream";
 
 const URI_SCHEME = "ccsp";
 export function createUri(docId: string, orig: boolean = false): vscode.Uri {
@@ -33,6 +33,10 @@ export class ScratchpadManager implements vscode.TextDocumentContentProvider {
         return docId;
     }
 
+    removeScratchpad(scratchpad: Scratchpad) {
+        this.documents.delete(scratchpad.id);
+    }
+
     getScratchpad(docId: string): Scratchpad | undefined {
         return this.documents.get(docId);
     }
@@ -43,7 +47,7 @@ export class ScratchpadManager implements vscode.TextDocumentContentProvider {
 
     provideTextDocumentContent(
         uri: vscode.Uri,
-        token: vscode.CancellationToken
+        _token: vscode.CancellationToken
     ): vscode.ProviderResult<string> {
         console.log(uri);
         const docId = uri.query;
@@ -54,7 +58,17 @@ export class ScratchpadManager implements vscode.TextDocumentContentProvider {
         if (uri.path === "orig") {
             return doc.originalContents;
         }
-        return doc.contents;
+
+        // Return the new contents.
+        if (doc.ended) {
+            return doc.contents;
+        }
+        // Progressively replace the original contents with the new contents.
+        const origLines = doc.originalContents.split("\n");
+        const newLines = doc.contents.split("\n");
+        const intermediateLines = origLines.slice(newLines.length);
+        intermediateLines.unshift(...newLines);
+        return intermediateLines.join("\n");
     }
 }
 
@@ -67,17 +81,47 @@ export class Scratchpad implements ResultStream<string> {
     id: string;
     originalContents: string;
     contents: string;
+    ended: boolean;
 
     constructor(originalContents: string) {
         this.id = scratchpadManager.addScratchpad(this);
         this.originalContents = originalContents;
         this.contents = "";
+        this.ended = false;
+    }
+
+    dispose() {
+        scratchpadManager.removeScratchpad(this);
+    }
+
+    get uri(): vscode.Uri {
+        return createUri(this.id);
+    }
+
+    showInDiffView() {
+        vscode.commands.executeCommand(
+            "vscode.diff",
+            createUri(this.id, true),
+            this.uri,
+            null,
+            {
+                viewColumn: vscode.ViewColumn.Beside,
+                preview: true,
+            } as vscode.TextDocumentShowOptions
+        );
     }
 
     write(text: string) {
         this.contents += text;
-        scratchpadManager.notifyDocumentChange(this.id);
+        this.#notifyChanges();
     }
 
-    end(): void {}
+    end(): void {
+        this.ended = true;
+        this.#notifyChanges();
+    }
+
+    #notifyChanges() {
+        scratchpadManager.notifyDocumentChange(this.id);
+    }
 }

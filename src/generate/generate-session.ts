@@ -1,0 +1,145 @@
+import * as vscode from "vscode";
+
+import { Scratchpad } from "./scratchpad";
+import { generateCode } from "./generate";
+
+export class GenerateSession {
+    #prompt: string;
+    #selection: vscode.Selection;
+    #editor: vscode.TextEditor;
+    #scratchpad: Scratchpad | null;
+    #statusBarItem: vscode.StatusBarItem | null = null;
+
+    constructor(
+        prompt: string,
+        selection: vscode.Selection,
+        editor: vscode.TextEditor
+    ) {
+        const selectionText = editor.document.getText(selection);
+
+        this.#prompt = prompt;
+        this.#selection = selection;
+        this.#editor = editor;
+        this.#scratchpad = new Scratchpad(selectionText);
+    }
+
+    dispose() {
+        this.hideResult();
+
+        this.#scratchpad?.dispose();
+        this.#scratchpad = null;
+
+        this.#statusBarItem?.dispose();
+        this.#statusBarItem = null;
+    }
+
+    start() {
+        const scratchpad = this.#scratchpad;
+        if (!scratchpad) {
+            throw new Error("The session is disposed");
+        }
+
+        vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Window,
+                title: "Generating code...",
+                cancellable: true,
+            },
+            async (_progress, token) => {
+                await generateCode(
+                    this.#prompt,
+                    this.#editor,
+                    token,
+                    scratchpad
+                );
+                this.#showGenerationDecisionMessage();
+            }
+        );
+    }
+
+    showResult() {
+        if (!this.#getOpenedResultTab()) {
+            this.#scratchpad?.showInDiffView();
+        }
+
+        if (this.#scratchpad?.ended) {
+            this.#showGenerationDecisionMessage();
+        }
+    }
+
+    hideResult() {
+        const openedResultTab = this.#getOpenedResultTab();
+        if (!openedResultTab) {
+            return;
+        }
+
+        vscode.window.tabGroups.close(openedResultTab);
+    }
+
+    #getOpenedResultTab(): vscode.Tab | null {
+        const scratchpad = this.#scratchpad;
+        if (!scratchpad) {
+            return null;
+        }
+
+        const thisUriString = scratchpad.uri.toString();
+        const tabGroups = vscode.window.tabGroups;
+        for (let tabGroup of tabGroups.all) {
+            for (let tab of tabGroup.tabs) {
+                const tabInput = tab.input;
+                if (!(tabInput instanceof vscode.TabInputTextDiff)) {
+                    continue;
+                }
+                if (tabInput.modified.toString() == thisUriString) {
+                    return tab;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    async #showGenerationDecisionMessage() {
+        if (!this.#statusBarItem) {
+            const statusBarItem = vscode.window.createStatusBarItem(
+                vscode.StatusBarAlignment.Left
+            );
+            statusBarItem.text = "$(check) Code Cursor";
+            statusBarItem.tooltip = "View Code Generation Result";
+            statusBarItem.color = new vscode.ThemeColor("button.foreground");
+            statusBarItem.command = "aicursor.showLastResult";
+            statusBarItem.show();
+            this.#statusBarItem = statusBarItem;
+        }
+
+        const pick = await vscode.window.showInformationMessage(
+            "Code generation is done.",
+            {
+                detail: "What do you want to do with the result?",
+            },
+            "Accept",
+            "Reject"
+        );
+        if (pick === "Accept") {
+            this.#applyChanges();
+        } else if (pick === "Reject") {
+            this.dispose();
+        }
+    }
+
+    #applyChanges() {
+        const scratchpad = this.#scratchpad;
+        if (!scratchpad) {
+            return;
+        }
+
+        this.#editor
+            .edit((editBuilder) => {
+                editBuilder.replace(this.#selection, scratchpad.contents);
+            })
+            .then(() => {
+                // Dispose self after changes are applied.
+                this.dispose();
+            });
+    }
+}

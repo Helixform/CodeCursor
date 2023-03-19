@@ -25,24 +25,7 @@
                 "title": "Code Cursor: Generate Code",
                 "when": "editorFocus"
             }
-        ],
-        "viewsContainers": {
-            "activitybar": [
-                {
-                    "id": "aicursor",
-                    "title": "Code Cursor",
-                    "icon": "icon.png"
-                }
-            ]
-        },
-        "views": {
-            "aicursor": [
-                {
-                    "id": "aicursor",
-                    "name": "Code Cursor"
-                }
-            ]
-        }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run package",
