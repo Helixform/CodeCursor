@@ -110,6 +110,7 @@ export async function generateCode(
 
         // Handle the SSE stream.
         let messageStarted = false;
+        let firstNewlineDropped = false;
 
         for await (const chunk of body) {
             const lines = chunk
@@ -140,6 +141,12 @@ export async function generateCode(
                 }
 
                 if (messageStarted) {
+                    // Server may produce newlines at the head of response, we need
+                    // to do this trick to ignore them in the final edit.
+                    if (!firstNewlineDropped && data.trim().length === 0) {
+                        firstNewlineDropped = true;
+                        continue;
+                    }
                     resultStream.write(data);
                 }
             }
