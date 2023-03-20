@@ -125,9 +125,6 @@ export async function generateCode(
                 filePath
             );
             requestBody.botMessages = [botMessage];
-            if (counter >= 2) {
-                debugger;
-            }
         }
 
         const resp = await fetch(
@@ -161,7 +158,6 @@ export async function generateCode(
                 }
                 // A string can be JSON to parse.
                 let data = JSON.parse(line.slice("data: ".length)) as string;
-                console.log(`${data}`);
                 if (data === "<|BEGIN_message|>") {
                     messageStarted = true;
                     continue;
@@ -187,7 +183,6 @@ export async function generateCode(
                         firstNewlineDropped = true;
                         continue;
                     }
-                    console.log(`handle data: ${data}`);
                     resultStream.write(data);
                     previousMessage += data;
                 }
