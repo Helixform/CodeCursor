@@ -8,6 +8,7 @@ export class GenerateSession {
     #selection: vscode.Selection;
     #editor: vscode.TextEditor;
     #scratchpad: Scratchpad | null;
+    #errorOccurred = false;
     #statusBarItem: vscode.StatusBarItem | null = null;
 
     constructor(
@@ -46,13 +47,20 @@ export class GenerateSession {
                 cancellable: true,
             },
             async (_progress, token) => {
-                await generateCode(
-                    this.#prompt,
-                    this.#editor,
-                    token,
-                    scratchpad
-                );
-                this.#showGenerationDecisionMessage();
+                try {
+                    await generateCode(
+                        this.#prompt,
+                        this.#editor,
+                        token,
+                        scratchpad
+                    );
+                    this.#showGenerationDecisionMessage();
+                } catch (e) {
+                    console.error(e);
+                    this.#errorOccurred = true;
+                    this.#showErrorDecisionMessage();
+                    return;
+                }
             }
         );
     }
@@ -62,7 +70,9 @@ export class GenerateSession {
             this.#scratchpad?.showInDiffView();
         }
 
-        if (this.#scratchpad?.ended) {
+        if (this.#errorOccurred) {
+            this.#showErrorDecisionMessage();
+        } else if (this.#scratchpad?.ended) {
             this.#showGenerationDecisionMessage();
         }
     }
@@ -74,6 +84,17 @@ export class GenerateSession {
         }
 
         vscode.window.tabGroups.close(openedResultTab);
+    }
+
+    #retry() {
+        this.#statusBarItem?.dispose();
+        this.#statusBarItem = null;
+
+        this.#scratchpad?.reset();
+
+        this.#errorOccurred = false;
+
+        this.start();
     }
 
     #getOpenedResultTab(): vscode.Tab | null {
@@ -123,6 +144,34 @@ export class GenerateSession {
         if (pick === "Accept") {
             this.#applyChanges();
         } else if (pick === "Reject") {
+            this.dispose();
+        }
+    }
+
+    async #showErrorDecisionMessage() {
+        if (!this.#statusBarItem) {
+            const statusBarItem = vscode.window.createStatusBarItem(
+                vscode.StatusBarAlignment.Left
+            );
+            statusBarItem.text = "$(error) Code Cursor";
+            statusBarItem.tooltip = "Retry";
+            statusBarItem.backgroundColor = new vscode.ThemeColor(
+                "statusBarItem.errorBackground"
+            );
+            statusBarItem.color = new vscode.ThemeColor("button.foreground");
+            statusBarItem.command = "aicursor.showLastResult";
+            statusBarItem.show();
+            this.#statusBarItem = statusBarItem;
+        }
+
+        const pick = await vscode.window.showInformationMessage(
+            "Failed to perform code generation.",
+            "Retry",
+            "Cancel"
+        );
+        if (pick === "Retry") {
+            this.#retry();
+        } else if (pick === "Cancel") {
             this.dispose();
         }
     }

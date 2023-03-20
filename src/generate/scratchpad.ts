@@ -110,6 +110,12 @@ export class Scratchpad implements ResultStream<string> {
         );
     }
 
+    reset() {
+        this.contents = "";
+        this.ended = false;
+        this.#notifyChanges();
+    }
+
     write(text: string) {
         this.contents += text;
         this.#notifyChanges();
