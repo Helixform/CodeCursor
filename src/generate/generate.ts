@@ -106,10 +106,8 @@ export async function generateCode(
     let previousMessage: string = "";
     let lastToken = "";
 
-    let counter = 0;
     while (!finished) {
         if (interrupted) {
-            counter++;
             // Generate an UUID as conversation ID.
             if (!conversationId) {
                 conversationId = uuidv4();
@@ -136,7 +134,7 @@ export async function generateCode(
 
         const body = resp.body;
         if (!body) {
-            console.error("error");
+            console.error("Unexpected response with empty body.");
             return;
         }
 
@@ -155,7 +153,6 @@ export async function generateCode(
                 }
                 // A string can be JSON to parse.
                 let data = JSON.parse(line.slice("data: ".length)) as string;
-                console.log(data);
                 if (data === "<|BEGIN_message|>") {
                     messageStarted = true;
                     continue;
