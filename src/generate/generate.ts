@@ -52,9 +52,6 @@ export async function generateCode(
         const blocks = [];
         let currentBlock = [];
         for (const line of lines) {
-            if (line.length === 0) {
-                continue;
-            }
             currentBlock.push(line);
             if (currentBlock.length >= 20) {
                 blocks.push(currentBlock.join("\n"));
@@ -158,6 +155,7 @@ export async function generateCode(
                 }
                 // A string can be JSON to parse.
                 let data = JSON.parse(line.slice("data: ".length)) as string;
+                console.log(data);
                 if (data === "<|BEGIN_message|>") {
                     messageStarted = true;
                     continue;
@@ -189,10 +187,7 @@ export async function generateCode(
             }
             // If we've reached the end of the message, break out of the loop.
             if (messageEnded) {
-                // TODO: 
-                // After setting `messageEnded` to `true`, we actually no longer care about the content of the stream. 
-                // However, directly breaking at this point may cause exceptions with a certain probability.
-                // We will continue to follow up on this issue in the long term.
+                break;
             }
         }
     }
