@@ -189,7 +189,10 @@ export async function generateCode(
             }
             // If we've reached the end of the message, break out of the loop.
             if (messageEnded) {
-                //break;
+                // TODO: 
+                // After setting `messageEnded` to `true`, we actually no longer care about the content of the stream. 
+                // However, directly breaking at this point may cause exceptions with a certain probability.
+                // We will continue to follow up on this issue in the long term.
             }
         }
     }
