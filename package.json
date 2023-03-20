@@ -2,7 +2,7 @@
     "name": "aicursor",
     "displayName": "Code Cursor",
     "description": "cursor.so integration for Visual Studio Code",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "publisher": "ktiays",
     "icon": "icon.png",
     "engines": {
