@@ -2,14 +2,13 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use std::future::Future;
 use std::pin::Pin;
-use std::rc::Rc;
 use std::task::{Context, Poll};
 
 use js_sys::{Object as JsObject, Reflect};
 use wasm_bindgen::prelude::*;
 
 use crate::bindings::{https::*, Buffer};
-use crate::futures::Defer;
+use crate::futures::{AsyncIter, Defer};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HttpMethod {
@@ -30,24 +29,12 @@ impl ToString for HttpMethod {
     }
 }
 
-#[derive(Clone)]
-struct HttpResponseDataHandler(Rc<Closure<dyn FnMut(Buffer)>>);
-
-impl Debug for HttpResponseDataHandler {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("HttpResponseDataHandler")
-            .field(&self.0)
-            .finish()
-    }
-}
-
 #[derive(Clone, Debug)]
 pub struct HttpRequest {
     url: String,
     method: HttpMethod,
     headers: HashMap<String, String>,
     body: Option<String>,
-    data_handler: Option<HttpResponseDataHandler>,
 }
 
 impl HttpRequest {
@@ -57,8 +44,6 @@ impl HttpRequest {
             method: HttpMethod::Get,
             headers: HashMap::new(),
             body: None,
-
-            data_handler: None,
         }
     }
 
@@ -78,15 +63,7 @@ impl HttpRequest {
         self
     }
 
-    pub fn set_data_handler<F>(mut self, handler: F) -> Self
-    where
-        F: FnMut(Buffer) + 'static,
-    {
-        self.data_handler = Some(HttpResponseDataHandler(Rc::new(Closure::new(handler))));
-        self
-    }
-
-    pub fn send(self) -> Result<SentHttpRequest, JsValue> {
+    pub async fn send(self) -> Result<HttpResponse, JsValue> {
         // Setup the request.
         let options = JsObject::new();
         Reflect::set(&options, &"method".into(), &self.method.to_string().into())?;
@@ -106,33 +83,39 @@ impl HttpRequest {
         }
         req.end();
 
-        Ok(SentHttpRequest::new(req, self.data_handler))
+        // Wait for the response.
+        let defer_resp = Defer::new();
+        let defer_resp_clone = defer_resp.clone();
+        let on_resp_closure: Closure<dyn FnMut(_)> = Closure::new(move |resp: IncomingMessage| {
+            defer_resp_clone.resolve(resp.into());
+        });
+        req.on("response", on_resp_closure.as_ref());
+        let resp: IncomingMessage = defer_resp.await?.into();
+
+        Ok(HttpResponse::new(resp))
     }
 }
 
-pub struct SentHttpRequest {
+pub struct HttpResponse {
     fut: Pin<Box<dyn Future<Output = Result<(), JsValue>>>>,
+    data_stream: AsyncIter<Buffer>,
+
+    // Ensure the closure alive during receiving response data.
+    #[allow(dead_code)]
+    on_data_closure: Closure<dyn FnMut(Buffer)>,
 }
 
-impl SentHttpRequest {
-    fn new(req: ClientRequest, data_handler: Option<HttpResponseDataHandler>) -> Self {
+impl HttpResponse {
+    fn new(resp: IncomingMessage) -> Self {
+        let data_stream = AsyncIter::new();
+        let mut data_stream_sender = data_stream.sender();
+
+        let on_data_closure: Closure<dyn FnMut(_)> = Closure::new(move |chunk: Buffer| {
+            data_stream_sender.send(chunk);
+        });
+        resp.on("data", on_data_closure.as_ref());
+
         let fut = async move {
-            // Wait for the response.
-            let defer_resp = Defer::new();
-            let defer_resp_clone = defer_resp.clone();
-            let on_resp_closure: Closure<dyn FnMut(_)> =
-                Closure::new(move |resp: IncomingMessage| {
-                    defer_resp_clone.resolve(resp.into());
-                });
-            req.on("response", on_resp_closure.as_ref());
-            let resp: IncomingMessage = defer_resp.await?.into();
-
-            // Receive data from the response body and wait until it ends.
-            let data_handler = data_handler;
-            if let Some(data_handler) = &data_handler {
-                resp.on("data", (*data_handler.0).as_ref());
-            }
-
             let defer_close = Defer::new();
             let defer_close_clone = defer_close.clone();
             let on_close_closure: Closure<dyn FnMut()> = Closure::new(move || {
@@ -144,11 +127,19 @@ impl SentHttpRequest {
             Ok(())
         };
 
-        Self { fut: Box::pin(fut) }
+        Self {
+            fut: Box::pin(fut),
+            data_stream,
+            on_data_closure,
+        }
+    }
+
+    pub fn body(&mut self) -> &mut AsyncIter<Buffer> {
+        &mut self.data_stream
     }
 }
 
-impl Future for SentHttpRequest {
+impl Future for HttpResponse {
     type Output = Result<(), JsValue>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {

@@ -1,5 +1,6 @@
 mod request_body;
 
+use futures::StreamExt;
 use node_bridge::http_client::{HttpMethod, HttpRequest};
 use request_body::{MessageType, RequestBody, UserRequest};
 use wasm_bindgen::prelude::*;
@@ -183,8 +184,10 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
         .add_header("content-type", "application/json")
         .add_header("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/0.1.0 Chrome/108.0.5359.62 Electron/22.0.0 Safari/537.36");
 
-    let result_stream_clone: ResultStream = result_stream.clone().into();
-    let request = request.set_data_handler(move |chunk| {
+    let mut response = request.send().await?;
+
+    let body = response.body();
+    while let Some(chunk) = body.next().await {
         let chunk = chunk.to_string("utf-8");
         node_bridge::bindings::console::log_str(&chunk);
         let lines = chunk.split("\n").filter(|l| l.len() > 0);
@@ -222,16 +225,16 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
                     continue;
                 }
                 previous_message.push_str(&data);
-                result_stream_clone.write(&data);
+                result_stream.write(&data);
             }
         }
         // If we've reached the end of the message, break out of the loop.
         if message_ended {
-            return;
+            break;
         }
-    });
+    }
 
-    request.send().unwrap().await?;
+    response.await?;
 
     node_bridge::bindings::console::log_str("done");
 

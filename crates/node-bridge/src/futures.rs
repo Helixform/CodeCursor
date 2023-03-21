@@ -1,6 +1,13 @@
+use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::future::IntoFuture;
+use std::pin::Pin;
+use std::rc::Rc;
+use std::task::{Context, Poll};
 
+use futures::{Future, Stream};
 use js_sys::{Function, Promise};
+use pin_project_lite::pin_project;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
@@ -20,10 +27,7 @@ impl Defer {
 
         let resolver = (resolve_f.unwrap(), reject_f.unwrap());
 
-        Self {
-            resolver,
-            promise
-        }
+        Self { resolver, promise }
     }
 
     pub fn resolve(&self, value: JsValue) {
@@ -42,5 +46,100 @@ impl IntoFuture for Defer {
 
     fn into_future(self) -> Self::IntoFuture {
         JsFuture::from(self.promise)
+    }
+}
+
+pub struct AsyncIter<T> {
+    inner: AsyncIterHandle<T>,
+}
+
+type AsyncIterHandle<T> = Rc<RefCell<AsyncIterInner<T>>>;
+
+pub struct AsyncIterSender<T> {
+    inner: AsyncIterHandle<T>,
+}
+
+pin_project! {
+    pub struct AsyncIterInner<T> {
+        ready_values: VecDeque<T>,
+        defer_next: Option<Defer>,
+        #[pin]
+        active_fut: Option<JsFuture>,
+    }
+}
+
+impl<T> AsyncIter<T> {
+    pub fn new() -> Self {
+        Self {
+            inner: Rc::new(RefCell::new(AsyncIterInner {
+                ready_values: VecDeque::new(),
+                defer_next: None,
+                active_fut: None,
+            })),
+        }
+    }
+
+    pub fn sender(&self) -> AsyncIterSender<T> {
+        AsyncIterSender {
+            inner: Rc::clone(&self.inner),
+        }
+    }
+}
+
+impl<T> Stream for AsyncIter<T> {
+    type Item = T;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        let mut inner_mut = self.inner.borrow_mut();
+        let inner_pinned = Pin::new(&mut *inner_mut);
+        inner_pinned.poll_next(cx)
+    }
+}
+
+impl<T> AsyncIterSender<T> {
+    pub fn send(&mut self, value: T) {
+        let mut inner_mut = self.inner.borrow_mut();
+        inner_mut.ready_values.push_back(value);
+
+        // Wake up one waiter.
+        if let Some(defer) = inner_mut.defer_next.as_ref() {
+            defer.resolve(JsValue::NULL);
+            inner_mut.defer_next = None;
+        }
+    }
+}
+
+impl<T> Stream for AsyncIterInner<T> {
+    type Item = T;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        crate::bindings::console::log_str("poll once");
+        let mut this = self.project();
+
+        if let Some(fut) = this.active_fut.as_mut().as_pin_mut() {
+            if matches!(fut.poll(cx), Poll::Pending) {
+                return Poll::Pending;
+            }
+            // Wake up from waiting, clear the defer.
+            this.active_fut.set(None);
+            *this.defer_next = None;
+        }
+
+        if let Some(value) = this.ready_values.pop_front() {
+            return Poll::Ready(Some(value));
+        }
+
+        let defer = Defer::new();
+        *this.defer_next = Some(defer.clone());
+
+        let fut = JsFuture::from(defer.promise);
+        this.active_fut.set(Some(fut));
+        let fut = this.active_fut.as_pin_mut().unwrap();
+
+        // Register the callback.
+        let poll = fut.poll(cx);
+        assert!(matches!(poll, Poll::Pending));
+
+        Poll::Pending
     }
 }
