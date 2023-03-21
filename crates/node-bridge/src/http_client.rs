@@ -133,13 +133,13 @@ impl SentHttpRequest {
                 resp.on("data", (*data_handler.0).as_ref());
             }
 
-            let defer_end = Defer::new();
-            let defer_end_clone = defer_end.clone();
-            let on_end_closure: Closure<dyn FnMut()> = Closure::new(move || {
-                defer_end_clone.resolve(JsValue::UNDEFINED);
+            let defer_close = Defer::new();
+            let defer_close_clone = defer_close.clone();
+            let on_close_closure: Closure<dyn FnMut()> = Closure::new(move || {
+                defer_close_clone.resolve(JsValue::UNDEFINED);
             });
-            resp.on("end", on_end_closure.as_ref());
-            defer_end.await?;
+            resp.on("close", on_close_closure.as_ref());
+            defer_close.await?;
 
             Ok(())
         };

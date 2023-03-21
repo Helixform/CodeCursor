@@ -1,6 +1,6 @@
 mod request_body;
 
-use node_bridge::http_client::{self, HttpRequest};
+use node_bridge::http_client::{HttpMethod, HttpRequest};
 use request_body::{MessageType, RequestBody, UserRequest};
 use wasm_bindgen::prelude::*;
 
@@ -115,7 +115,7 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
 
     let prompt = input.prompt();
 
-    let mut user_request = UserRequest::new(
+    let user_request = UserRequest::new(
         prompt,
         ".".to_owned(),
         file_path.to_owned(),
@@ -128,7 +128,7 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
         message_type,
         0,
     );
-    let mut request_body = RequestBody::new(
+    let request_body = RequestBody::new(
         user_request,
         vec![],
         "copilot".to_owned(),
@@ -150,95 +150,90 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
     let mut previous_message: String = "".to_owned();
     let mut last_token = "".to_owned();
 
-    while !finished {
-        if interrupted {
-            // Generate an UUID as conversation ID.
-            if conversation_id.is_none() {
-                conversation_id = Some(uuid::Uuid::new_v4().to_string());
-            }
-            // const botMessage = interruptedBotMessage(
-            //     messageType,
-            //     conversationId,
-            //     previousMessage,
-            //     lastToken,
-            //     filePath
-            // );
-            // requestBody.botMessages = [botMessage];
-        }
+    // while !finished {
+    // if interrupted {
+    // Generate an UUID as conversation ID.
+    // if conversation_id.is_none() {
+    //     conversation_id = Some(uuid::Uuid::new_v4().to_string());
+    // }
+    // const botMessage = interruptedBotMessage(
+    //     messageType,
+    //     conversationId,
+    //     previousMessage,
+    //     lastToken,
+    //     filePath
+    // );
+    // requestBody.botMessages = [botMessage];
+    // }
 
-        let request = HttpRequest::new(&format!(
+    node_bridge::bindings::console::log_str(&serde_json::to_string(&request_body).unwrap());
+
+    let request = HttpRequest::new(&format!(
             "https://aicursor.com/{}",
             if interrupted {
                 "continue"
             } else {
                 "conversation"
             }
-        )).add_header(header_field, value)
+        ))
+        .set_method(HttpMethod::Post)
+        .set_body(serde_json::to_string(&request_body).unwrap())
+        .add_header("authority", "aicursor.com")
+        .add_header("accept", "*/*")
+        .add_header("content-type", "application/json")
+        .add_header("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/0.1.0 Chrome/108.0.5359.62 Electron/22.0.0 Safari/537.36");
 
-        // const resp = await fetch(
-        //     `https://aicursor.com/${interrupted ? "continue" : "conversation"}`,
-        //     {
-        //         method: "POST",
-        //         headers,
-        //         body: JSON.stringify(requestBody),
-        //         signal: abortController.signal,
-        //     }
-        // );
-
-        // const body = resp.body;
-        // if (!body) {
-        //     console.error("Unexpected response with empty body.");
-        //     return;
-        // }
-
-        // Reset the interrupted flag.
-        interrupted = false;
-
-        for chunk in vec![""] {
-            let lines = chunk.split("\n").filter(|l| l.len() > 0);
-            let mut message_ended = false;
-            for line in lines {
-                if !line.starts_with("data: ") {
-                    continue;
-                }
-                // A string can be JSON to parse.
-                let data_str = &line["data: ".len()..];
-                let data = serde_json::from_str::<String>(data_str).unwrap();
-                if data == "<|BEGIN_message|>" {
-                    message_started = true;
-                    continue;
-                } else if data.contains("<|END_interrupt|>") {
-                    interrupted = true;
-                    last_token = data.clone();
-                    // `END_interrupt` is included in valid data,
-                    // we cannot discard it.
-                    let data = data.replace("<|END_interrupt|>", "");
-                } else if data == "<|END_message|>" {
-                    if !interrupted {
-                        finished = true;
-                    }
-                    // We cannot exit the loop here because we're in a nested loop.
-                    message_ended = true;
-                    break;
-                }
-
-                if message_started {
-                    // Server may produce newlines at the head of response, we need
-                    // to do this trick to ignore them in the final edit.
-                    if !first_newline_dropped && data.trim().len() == 0 {
-                        first_newline_dropped = true;
-                        continue;
-                    }
-                    previous_message.push_str(&data);
-                    result_stream.write(data);
-                }
+    let result_stream_clone: ResultStream = result_stream.clone().into();
+    let request = request.set_data_handler(move |chunk| {
+        let chunk = chunk.to_string("utf-8");
+        node_bridge::bindings::console::log_str(&chunk);
+        let lines = chunk.split("\n").filter(|l| l.len() > 0);
+        let mut message_ended = false;
+        for line in lines {
+            if !line.starts_with("data: ") {
+                continue;
             }
-            // If we've reached the end of the message, break out of the loop.
-            if message_ended {
+            // A string can be JSON to parse.
+            let data_str = &line["data: ".len()..];
+            let data = serde_json::from_str::<String>(data_str).unwrap();
+            if data == "<|BEGIN_message|>" {
+                message_started = true;
+                continue;
+            } else if data.contains("<|END_interrupt|>") {
+                interrupted = true;
+                last_token = data.clone();
+                // `END_interrupt` is included in valid data,
+                // we cannot discard it.
+                let data = data.replace("<|END_interrupt|>", "");
+            } else if data == "<|END_message|>" {
+                if !interrupted {
+                    finished = true;
+                }
+                // We cannot exit the loop here because we're in a nested loop.
+                message_ended = true;
                 break;
             }
+
+            if message_started {
+                // Server may produce newlines at the head of response, we need
+                // to do this trick to ignore them in the final edit.
+                if !first_newline_dropped && data.trim().len() == 0 {
+                    first_newline_dropped = true;
+                    continue;
+                }
+                previous_message.push_str(&data);
+                result_stream_clone.write(&data);
+            }
         }
-    }
+        // If we've reached the end of the message, break out of the loop.
+        if message_ended {
+            return;
+        }
+    });
+
+    request.send().unwrap().await?;
+
+    node_bridge::bindings::console::log_str("done");
 
     result_stream.end();
     Ok(())

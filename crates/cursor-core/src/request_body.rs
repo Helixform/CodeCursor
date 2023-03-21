@@ -1,6 +1,7 @@
 use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum MessageType {
     Edit,
     Generate,
@@ -13,6 +14,9 @@ pub struct RequestBody {
 
     #[serde(rename = "botMessages")]
     pub bot_messages: Vec<BotMessage>,
+
+    #[serde(rename = "userMessages")]
+    pub user_messages: Vec<String>,
 
     #[serde(rename = "contextType")]
     pub context_type: String,
@@ -31,6 +35,7 @@ impl RequestBody {
         Self {
             user_request,
             bot_messages,
+            user_messages: vec![],
             context_type,
             root_path,
         }
@@ -65,6 +70,9 @@ pub struct UserRequest {
     #[serde(rename = "customCodeBlocks")]
     pub custom_code_blocks: Vec<String>,
 
+    #[serde(rename = "codeBlockIdentifiers")]
+    pub code_block_identifiers: Vec<String>,
+
     #[serde(rename = "msgType")]
     pub message_type: MessageType,
 
@@ -96,6 +104,7 @@ impl UserRequest {
             current_selection,
             copilot_code_blocks,
             custom_code_blocks,
+            code_block_identifiers: vec![],
             message_type,
             max_original_line,
         }
