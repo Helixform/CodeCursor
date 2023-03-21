@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Copy, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MessageType {
     Edit,
@@ -123,7 +123,7 @@ pub struct BotMessage {
     pub conversation_id: String,
 
     #[serde(rename = "type")]
-    pub message_type: String,
+    pub message_type: MessageType,
 
     #[serde(rename = "message")]
     pub message: String,
@@ -152,7 +152,7 @@ impl BotMessage {
         sender: String,
         send_at: i64,
         conversation_id: String,
-        message_type: String,
+        message_type: MessageType,
         message: String,
         last_token: String,
         finished: bool,

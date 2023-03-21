@@ -111,6 +111,7 @@ impl HttpResponse {
         let mut data_stream_sender = data_stream.sender();
 
         let on_data_closure: Closure<dyn FnMut(_)> = Closure::new(move |chunk: Buffer| {
+            crate::bindings::console::log_str("recv chunk");
             data_stream_sender.send(chunk);
         });
         resp.on("data", on_data_closure.as_ref());
