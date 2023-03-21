@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import fetch from "node-fetch";
 import path = require("path");
 import { ResultStream } from "./result-stream";
 import {
