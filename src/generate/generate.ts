@@ -2,20 +2,65 @@ import * as vscode from "vscode";
 import fetch from "node-fetch";
 import path = require("path");
 import { ResultStream } from "./result-stream";
-import { v4 as uuidv4 } from "uuid";
 import {
-    BotMessage,
-    BotMessageType,
-    interruptedBotMessage,
-} from "./bot-message";
+    generateCode as rustGenerateCode,
+    IGenerateInput,
+    IResultStream,
+    ISelectionRange,
+} from "../../crates/cursor-core/pkg";
 
-const headers = {
-    ["authority"]: "aicursor.com",
-    ["accept"]: "*/*",
-    ["content-type"]: "application/json",
-    ["user-agent"]:
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/0.1.0 Chrome/108.0.5359.62 Electron/22.0.0 Safari/537.36",
-};
+class GenerateInput implements IGenerateInput {
+    private _prompt: string;
+    private _documentText: string;
+    private _selectionRange: ISelectionRange;
+    private _resultStream: IResultStream;
+
+    constructor(
+        prompt: string,
+        documentText: string,
+        selectionRange: ISelectionRange,
+        resultStream: IResultStream
+    ) {
+        this._prompt = prompt;
+        this._documentText = documentText;
+        this._selectionRange = selectionRange;
+        this._resultStream = resultStream;
+    }
+
+    get prompt(): string {
+        return this._prompt;
+    }
+
+    get documentText(): string {
+        return this._documentText;
+    }
+
+    get selectionRange(): ISelectionRange {
+        return this._selectionRange;
+    }
+
+    get resultStream(): IResultStream {
+        return this._resultStream;
+    }
+}
+
+class SelectionRange implements ISelectionRange {
+    private _offset: number;
+    private _length: number;
+
+    constructor(offset: number, length: number) {
+        this._offset = offset;
+        this._length = length;
+    }
+
+    get offset(): number {
+        return this._offset;
+    }
+
+    get length(): number {
+        return this._length;
+    }
+}
 
 export async function generateCode(
     prompt: string,
@@ -23,171 +68,17 @@ export async function generateCode(
     cancellationToken: vscode.CancellationToken,
     resultStream: ResultStream<String>
 ): Promise<void> {
-    // Current file path.
-    const filePath = editor.document.uri.fsPath;
-
+    const document = editor.document;
     const selection = editor.selection;
-    const selectionText = editor.document.getText(selection);
-
-    const precedingCode = editor.document.getText(
-        new vscode.Range(
-            new vscode.Position(0, 0),
-            new vscode.Position(selection.start.line, selection.start.character)
-        )
-    );
-    const lastLine = editor.document.lineAt(editor.document.lineCount - 1);
-    const suffixCode = editor.document.getText(
-        new vscode.Range(
-            new vscode.Position(selection.end.line, selection.end.character),
-            new vscode.Position(
-                lastLine.lineNumber,
-                lastLine.range.end.character
-            )
-        )
+    const text = document.getText();
+    const selectionStartOffset = document.offsetAt(selection.start);
+    const selectionEndOffset = document.offsetAt(selection.end);
+    const selectionRange = new SelectionRange(
+        selectionStartOffset,
+        selectionEndOffset - selectionStartOffset
     );
 
-    // Split the code into chunks of 20 line blocks.
-    function splitCodeIntoBlocks(code: string) {
-        const lines = code.split("\n");
-        const blocks = [];
-        let currentBlock = [];
-        for (const line of lines) {
-            currentBlock.push(line);
-            if (currentBlock.length >= 20) {
-                blocks.push(currentBlock.join("\n"));
-                currentBlock = [];
-            }
-        }
-        if (currentBlock.length > 0) {
-            blocks.push(currentBlock.join("\n"));
-        }
-        return blocks;
-    }
-
-    const messageType =
-        selectionText.length > 0
-            ? BotMessageType.edit
-            : BotMessageType.generate;
-
-    const requestBody = {
-        userRequest: {
-            message: prompt,
-            currentRootPath: path.dirname(filePath),
-            currentFileName: filePath,
-            currentFileContents: editor.document.getText(),
-            precedingCode: splitCodeIntoBlocks(precedingCode),
-            currentSelection: selectionText,
-            suffixCode: splitCodeIntoBlocks(suffixCode),
-            copilotCodeBlocks: [],
-            customCodeBlocks: [],
-            codeBlockIdentifiers: [],
-            msgType: messageType,
-            maxOrigLine: null,
-        },
-        userMessages: [],
-        botMessages: [] as BotMessage[],
-        contextType: "copilot",
-        rootPath: vscode.workspace.workspaceFolders?.[0].uri.fsPath,
-    };
-
-    const abortController = new AbortController();
-    cancellationToken.onCancellationRequested(() => abortController.abort());
-
-    /// A Boolean value indicating whether the conversation is finished.
-    let finished = false;
-    // If the conversation was interrupted, we need to send a "continue" request.
-    let interrupted = false;
-    // Handle the SSE stream.
-    let messageStarted = false;
-    let firstNewlineDropped = false;
-
-    let conversationId: string | null = null;
-    // The last message received from the server.
-    let previousMessage: string = "";
-    let lastToken = "";
-
-    while (!finished) {
-        if (interrupted) {
-            // Generate an UUID as conversation ID.
-            if (!conversationId) {
-                conversationId = uuidv4();
-            }
-            const botMessage = interruptedBotMessage(
-                messageType,
-                conversationId,
-                previousMessage,
-                lastToken,
-                filePath
-            );
-            requestBody.botMessages = [botMessage];
-        }
-
-        const resp = await fetch(
-            `https://aicursor.com/${interrupted ? "continue" : "conversation"}`,
-            {
-                method: "POST",
-                headers,
-                body: JSON.stringify(requestBody),
-                signal: abortController.signal,
-            }
-        );
-
-        const body = resp.body;
-        if (!body) {
-            console.error("Unexpected response with empty body.");
-            return;
-        }
-
-        // Reset the interrupted flag.
-        interrupted = false;
-
-        for await (const chunk of body) {
-            const lines = chunk
-                .toString()
-                .split("\n")
-                .filter((l) => l.length > 0);
-            let messageEnded = false;
-            for (const line of lines) {
-                if (!line.startsWith('data: "')) {
-                    continue;
-                }
-                // A string can be JSON to parse.
-                let data = JSON.parse(line.slice("data: ".length)) as string;
-                if (data === "<|BEGIN_message|>") {
-                    messageStarted = true;
-                    continue;
-                } else if (data.includes("<|END_interrupt|>")) {
-                    interrupted = true;
-                    lastToken = data;
-                    // `END_interrupt` is included in valid data,
-                    // we cannot discard it.
-                    data = data.replace("<|END_interrupt|>", "");
-                } else if (data === "<|END_message|>") {
-                    if (!interrupted) {
-                        finished = true;
-                    }
-                    // We cannot exit the loop here because we're in a nested loop.
-                    messageEnded = true;
-                    break;
-                }
-
-                if (messageStarted) {
-                    // Server may produce newlines at the head of response, we need
-                    // to do this trick to ignore them in the final edit.
-                    if (!firstNewlineDropped && data.trim().length === 0) {
-                        firstNewlineDropped = true;
-                        continue;
-                    }
-                    resultStream.write(data);
-                    previousMessage += data;
-                }
-            }
-            // If we've reached the end of the message, break out of the loop.
-            if (messageEnded) {
-                break;
-            }
-        }
-    }
-
-    resultStream.end();
+    await rustGenerateCode(
+        new GenerateInput(prompt, text, selectionRange, resultStream)
+    );
 }

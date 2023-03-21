@@ -4,6 +4,9 @@ node_modules
 .vscode-test/
 *.vsix
 
+# Rust
+/target
+
 # General
 .DS_Store
 .AppleDouble

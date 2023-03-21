@@ -1,11 +1,13 @@
 .vscode/**
 .vscode-test/**
 artworks/**
+crates/**
 out/**
 node_modules/**
 src/**
 .gitignore
 .yarnrc
+Cargo.toml
 webpack.config.js
 vsc-extension-quickstart.md
 **/tsconfig.json
