@@ -6,21 +6,18 @@ import { generateCode } from "./core";
 export class GenerateSession {
     #prompt: string;
     #selection: vscode.Selection;
-    #editor: vscode.TextEditor;
+    #document: vscode.TextDocument;
     #scratchpad: Scratchpad | null;
     #errorOccurred = false;
     #statusBarItem: vscode.StatusBarItem | null = null;
 
-    constructor(
-        prompt: string,
-        selection: vscode.Selection,
-        editor: vscode.TextEditor
-    ) {
-        const selectionText = editor.document.getText(selection);
+    constructor(prompt: string, editor: vscode.TextEditor) {
+        const { document, selection } = editor;
+        const selectionText = document.getText(selection);
 
         this.#prompt = prompt;
         this.#selection = selection;
-        this.#editor = editor;
+        this.#document = document;
         this.#scratchpad = new Scratchpad(selectionText);
     }
 
@@ -50,7 +47,8 @@ export class GenerateSession {
                 try {
                     await generateCode(
                         this.#prompt,
-                        this.#editor,
+                        this.#document,
+                        this.#selection,
                         token,
                         scratchpad
                     );
@@ -119,8 +117,8 @@ export class GenerateSession {
 
         const thisUriString = scratchpad.uri.toString();
         const tabGroups = vscode.window.tabGroups;
-        for (let tabGroup of tabGroups.all) {
-            for (let tab of tabGroup.tabs) {
+        for (const tabGroup of tabGroups.all) {
+            for (const tab of tabGroup.tabs) {
                 const tabInput = tab.input;
                 if (!(tabInput instanceof vscode.TabInputTextDiff)) {
                     continue;
@@ -131,6 +129,16 @@ export class GenerateSession {
             }
         }
 
+        return null;
+    }
+
+    #getEditor(): vscode.TextEditor | null {
+        const documentUriString = this.#document.uri.toString();
+        for (const editor of vscode.window.visibleTextEditors) {
+            if (editor.document.uri.toString() === documentUriString) {
+                return editor;
+            }
+        }
         return null;
     }
 
@@ -196,8 +204,16 @@ export class GenerateSession {
             return;
         }
 
+        const editor = this.#getEditor();
+        if (!editor) {
+            vscode.window.showWarningMessage(
+                "Need to active the original text buffer before applying changes."
+            );
+            return;
+        }
+
         // TODO: reconcile with the modified document.
-        this.#editor
+        editor
             .edit((editBuilder) => {
                 editBuilder.replace(this.#selection, scratchpad.contents);
             })

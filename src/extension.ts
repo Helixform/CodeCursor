@@ -16,7 +16,6 @@ async function handleGenerateCodeCommand() {
     if (!editor) {
         return;
     }
-    const selection = editor.selection;
 
     // End the active session first.
     const globalState = getGlobalState();
@@ -25,7 +24,7 @@ async function handleGenerateCodeCommand() {
         activeSession.dispose();
     }
 
-    const session = new GenerateSession(input, selection, editor);
+    const session = new GenerateSession(input, editor);
     session.start();
     session.showResult();
     globalState.activeSession = session;

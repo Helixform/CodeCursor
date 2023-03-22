@@ -26,11 +26,11 @@ class SelectionRange implements ISelectionRange {
 
 export async function generateCode(
     prompt: string,
-    editor: vscode.TextEditor,
+    document: vscode.TextDocument,
+    selection: vscode.Selection,
     cancellationToken: vscode.CancellationToken,
     resultStream: ResultStream<String>
 ): Promise<void> {
-    const { document, selection } = editor;
     const filePath = document.uri.fsPath;
     const workspaceDirectory =
         vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath ?? null;
