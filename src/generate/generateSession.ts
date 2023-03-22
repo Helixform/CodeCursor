@@ -207,7 +207,7 @@ export class GenerateSession {
         const editor = this.#getEditor();
         if (!editor) {
             vscode.window.showWarningMessage(
-                "Need to active the original text buffer before applying changes."
+                "Need to activate the original text buffer before applying changes."
             );
             return;
         }
