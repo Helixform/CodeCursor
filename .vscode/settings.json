@@ -13,5 +13,6 @@
     "cSpell.words": [
         "aicursor"
     ],
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "editor.formatOnSave": true
 }

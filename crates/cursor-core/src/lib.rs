@@ -151,13 +151,11 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
     let mut previous_message: String = "".to_owned();
     let mut last_token = "".to_owned();
 
-    let x = uuid::Uuid::new_v4().to_string();
-    node_bridge::bindings::console::log_str(&format!("{}", x));
     while !finished {
         if interrupted {
             // Generate an UUID as conversation ID.
             if conversation_id.is_none() {
-                conversation_id = Some(uuid::Uuid::new_v4().to_string());
+                conversation_id = Some(node_bridge::bindings::uuid::uuid_v4());
             }
             let timestamp = chrono::Utc::now().timestamp_millis();
             let bot_message = BotMessage::new(
