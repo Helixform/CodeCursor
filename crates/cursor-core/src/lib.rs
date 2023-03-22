@@ -62,18 +62,18 @@ extern "C" {
     #[wasm_bindgen(method, getter, structural)]
     pub fn prompt(this: &GenerateInput) -> String;
 
-    #[wasm_bindgen(method, getter, structural, js_name = "documentText")]
+    #[wasm_bindgen(method, getter, structural, js_name = documentText)]
     pub fn document_text(this: &GenerateInput) -> String;
 
-    #[wasm_bindgen(method, getter, structural, js_name = "filePath")]
+    #[wasm_bindgen(method, getter, structural, js_name = filePath)]
     pub fn file_path(this: &GenerateInput) -> String;
 
-    #[wasm_bindgen(method, getter, structural, js_name = "workspaceDirectory")]
+    #[wasm_bindgen(method, getter, structural, js_name = workspaceDirectory)]
     pub fn workspace_directory(this: &GenerateInput) -> Option<String>;
 
-    #[wasm_bindgen(method, getter, structural, js_name = "selectionRange")]
+    #[wasm_bindgen(method, getter, structural, js_name = selectionRange)]
     pub fn selection_range(this: &GenerateInput) -> SelectionRange;
 
-    #[wasm_bindgen(method, getter, structural, js_name = "resultStream")]
+    #[wasm_bindgen(method, getter, structural, js_name = resultStream)]
     pub fn result_stream(this: &GenerateInput) -> ResultStream;
 }

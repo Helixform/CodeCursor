@@ -24,7 +24,7 @@ extern "C" {
 extern "C" {
     pub type IncomingMessage;
 
-    #[wasm_bindgen(method, getter, js_name = "statusCode")]
+    #[wasm_bindgen(method, getter, js_name = statusCode)]
     pub fn status_code(this: &IncomingMessage) -> u16;
 
     #[wasm_bindgen(method)]
