@@ -12,11 +12,20 @@ use crate::bindings::{https::*, Buffer};
 use crate::futures::{AsyncIter, Defer};
 use crate::{closure, closure_once};
 
+/// The Request Method (VERB)
+///
+/// Currently it does not cover all the methods defined in
+/// [RFC 7230](https://tools.ietf.org/html/rfc7231#section-4.1),
+/// which is fine for our usage.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HttpMethod {
+    /// GET
     Get,
+    /// POST
     Post,
+    /// PUT
     Put,
+    /// DELETE
     Delete,
 }
 
@@ -32,6 +41,10 @@ impl ToString for HttpMethod {
     }
 }
 
+/// An HTTP request.
+///
+/// When performing the request, it uses [`request`] from Node.js as
+/// the underlying HTTP client.
 #[derive(Clone, Debug)]
 pub struct HttpRequest {
     url: String,
@@ -41,6 +54,7 @@ pub struct HttpRequest {
 }
 
 impl HttpRequest {
+    /// Constructs a new request.
     pub fn new(url: &str) -> Self {
         Self {
             url: url.to_owned(),
@@ -50,22 +64,34 @@ impl HttpRequest {
         }
     }
 
+    /// Sets the method.
     pub fn set_method(mut self, method: HttpMethod) -> Self {
         self.method = method;
         self
     }
 
+    /// Adds a header pair.
     pub fn add_header(mut self, header_field: &str, value: &str) -> Self {
         self.headers
             .insert(header_field.to_owned(), value.to_owned());
         self
     }
 
+    /// Sets the body string.
     pub fn set_body(mut self, body: String) -> Self {
         self.body = Some(body);
         self
     }
 
+    /// Sends the request.
+    ///
+    /// This is an asynchronous method which blocks the caller before the
+    /// response is received.
+    ///
+    /// ## Errors
+    ///
+    /// This method returns [`Result::Err(JsValue)`] when the underlying
+    /// request reports an error.
     pub async fn send(self) -> Result<HttpResponse, JsValue> {
         // Setup the request.
         let options = JsObject::new();
@@ -126,17 +152,22 @@ impl HttpRequest {
     }
 }
 
+/// A received HTTP response.
+///
+/// Values of this type is created via [`HttpRequest`], you can read
+/// the body data from the stream returned from `HttpRequest::body()`
+/// method.
 pub struct HttpResponse {
     fut: Pin<Box<dyn Future<Output = Result<(), JsValue>>>>,
     data_stream: AsyncIter<Buffer>,
+    resp: IncomingMessage,
 }
 
 impl HttpResponse {
     fn new(resp: IncomingMessage) -> Self {
         let data_stream = AsyncIter::new();
-        let mut data_stream_sender = data_stream.sender();
-        let mut data_stream_sender_for_close = data_stream.sender();
 
+        let mut data_stream_sender = data_stream.sender();
         resp.on(
             "data",
             closure!(|chunk: Buffer| {
@@ -147,32 +178,61 @@ impl HttpResponse {
             .into_js_value(),
         );
 
-        let defer_close = Defer::new();
-        let defer_close_clone = defer_close.clone();
+        let mut data_stream_sender_for_end = data_stream.sender();
+        let defer_end = Defer::new();
+        let defer_end_clone = defer_end.clone();
         resp.on(
-            "close",
+            "end",
             closure_once!(|| {
                 #[cfg(debug_assertions)]
-                crate::bindings::console::log_str("response closed");
-                data_stream_sender_for_close.send(None);
-                defer_close_clone.resolve(JsValue::UNDEFINED);
+                crate::bindings::console::log_str("response ended");
+                data_stream_sender_for_end.send(None);
+                defer_end_clone.resolve(JsValue::UNDEFINED);
+            })
+            .into_js_value(),
+        );
+
+        let mut data_stream_sender_for_error = data_stream.sender();
+        let defer_err = Defer::new();
+        let defer_err_clone = defer_err.clone();
+        resp.on(
+            "error",
+            closure_once!(|err: JsValue| {
+                crate::bindings::console::error1(&err);
+                data_stream_sender_for_error.send(None);
+                defer_err_clone.resolve(err);
             })
             .into_js_value(),
         );
 
         let fut = async move {
-            defer_close.await?;
-            Ok(())
+            match select(defer_end.into_future(), defer_err.into_future()).await {
+                Either::Right((Ok(err), _)) => Err(err),
+                _ => Ok(()),
+            }
         };
 
         Self {
             fut: Box::pin(fut),
             data_stream,
+            resp,
         }
     }
 
+    /// Returns the status code of this response.
+    pub fn status_code(&self) -> u16 {
+        self.resp.status_code()
+    }
+
+    /// Returns an [`AsyncIter<Buffer>`] for reading data of the body.
     pub fn body(&mut self) -> &mut AsyncIter<Buffer> {
         &mut self.data_stream
+    }
+}
+
+impl Drop for HttpResponse {
+    fn drop(&mut self) {
+        self.resp.destroy(None);
     }
 }
 

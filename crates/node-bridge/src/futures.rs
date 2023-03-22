@@ -11,6 +11,10 @@ use pin_project_lite::pin_project;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 
+/// A value that will be resolved later.
+///
+/// This is convenient for converting callback-style asynchronous
+/// methods to awaitable values.
 #[derive(Clone)]
 pub struct Defer {
     resolver: (Function, Function),
@@ -18,6 +22,7 @@ pub struct Defer {
 }
 
 impl Defer {
+    /// Constructs a pending value.
     pub fn new() -> Self {
         let (mut resolve_f, mut reject_f) = (None, None);
         let promise = Promise::new(&mut |res, rej| {
@@ -30,10 +35,12 @@ impl Defer {
         Self { resolver, promise }
     }
 
+    /// Resolves the defer with a given value.
     pub fn resolve(&self, value: JsValue) {
         self.resolver.0.call1(&JsValue::UNDEFINED, &value).unwrap();
     }
 
+    /// Makes the defer fail with a given error value.
     pub fn reject(&self, error: JsValue) {
         self.resolver.1.call1(&JsValue::UNDEFINED, &error).unwrap();
     }
@@ -49,6 +56,10 @@ impl IntoFuture for Defer {
     }
 }
 
+/// An asynchronous sequence that delivers elements from a paired
+/// sender that is called to produce new elements.
+///
+/// **Note: This is an experimental feature!!!**
 pub struct AsyncIter<T> {
     inner: AsyncIterHandle<T>,
 }
