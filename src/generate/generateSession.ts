@@ -123,7 +123,7 @@ export class GenerateSession {
                 if (!(tabInput instanceof vscode.TabInputTextDiff)) {
                     continue;
                 }
-                if (tabInput.modified.toString() == thisUriString) {
+                if (tabInput.modified.toString() === thisUriString) {
                     return tab;
                 }
             }
