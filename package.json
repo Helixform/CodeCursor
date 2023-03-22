@@ -18,6 +18,18 @@
         "Snippets",
         "Education"
     ],
+    "keywords": [
+        "chatgpt",
+        "gpt",
+        "gpt4",
+        "gpt3.5",
+        "openai",
+        "copilot",
+        "codex",
+        "code generation",
+        "code explanation",
+        "code summary"
+    ],
     "activationEvents": [
         "onCommand:*"
     ],
