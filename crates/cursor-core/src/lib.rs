@@ -1,5 +1,6 @@
 mod generate;
 
+use node_bridge::bindings::AbortSignal;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -27,6 +28,7 @@ interface IGenerateInput {
     get workspaceDirectory(): string | null;
     get selectionRange(): ISelectionRange;
     get resultStream(): IResultStream;
+    get abortSignal(): AbortSignal;
 }
 "#;
 
@@ -76,4 +78,7 @@ extern "C" {
 
     #[wasm_bindgen(method, getter, structural, js_name = resultStream)]
     pub fn result_stream(this: &GenerateInput) -> ResultStream;
+
+    #[wasm_bindgen(method, getter, structural, js_name = abortSignal)]
+    pub fn abort_signal(this: &GenerateInput) -> AbortSignal;
 }

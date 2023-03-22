@@ -233,6 +233,9 @@ impl HttpResponse {
 
 impl Drop for HttpResponse {
     fn drop(&mut self) {
+        #[cfg(debug_assertions)]
+        console::log2(&"response dropped: ".into(), &self.resp);
+
         self.resp.destroy(None);
     }
 }

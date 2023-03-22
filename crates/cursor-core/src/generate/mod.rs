@@ -1,9 +1,16 @@
 mod models;
 
+use std::future::IntoFuture;
+
 use crate::GenerateInput;
-use futures::StreamExt;
+use futures::{
+    future::{select, Either},
+    StreamExt,
+};
 use models::*;
+use node_bridge::futures::Defer;
 use node_bridge::http_client::{HttpMethod, HttpRequest};
+use node_bridge::prelude::*;
 use wasm_bindgen::prelude::*;
 
 // Split the code into chunks of 20 line blocks.
@@ -24,14 +31,14 @@ fn split_code_into_blocks(code: &str) -> Vec<String> {
     blocks
 }
 
-#[wasm_bindgen(js_name = generateCode)]
-pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
+async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
     let file_path = input.file_path();
     let file_dir = file_path
         .split("/")
         .take(file_path.split("/").count() - 1)
         .collect::<Vec<&str>>()
         .join("/");
+    #[cfg(debug_assertions)]
     node_bridge::bindings::console::log_str(&format!("file_dir: {}", file_dir));
     let workspace_directory = input.workspace_directory();
     let selection = input.selection_range();
@@ -99,7 +106,8 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
             request_body.bot_messages = vec![bot_message];
         }
 
-        node_bridge::bindings::console::log_str(&serde_json::to_string(&request_body).unwrap());
+        #[cfg(debug_assertions)]
+        console::log_str(&serde_json::to_string(&request_body).unwrap());
 
         let request = HttpRequest::new(&format!(
             "https://aicursor.com/{}",
@@ -121,7 +129,8 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
         let body = response.body();
         while let Some(chunk) = body.next().await {
             let chunk = chunk.to_string("utf-8");
-            node_bridge::bindings::console::log_str(&chunk);
+            #[cfg(debug_assertions)]
+            console::log_str(&chunk);
             let lines = chunk.split("\n").filter(|l| l.len() > 0);
             let mut message_ended = false;
             for line in lines {
@@ -169,8 +178,33 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
         response.await?;
     }
 
-    node_bridge::bindings::console::log_str("done");
+    node_bridge::bindings::console::log_str("generate done");
 
     result_stream.end();
     Ok(())
+}
+
+#[wasm_bindgen(js_name = generateCode)]
+pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
+    let defer_abort = Defer::new();
+    let defer_abort_clone = defer_abort.clone();
+    let abort_signal = input.abort_signal();
+    abort_signal.add_event_listener(
+        "abort",
+        closure_once!(|| {
+            defer_abort_clone.resolve(JsValue::null());
+        })
+        .into_js_value(),
+    );
+
+    let fut = generate_code_inner(input);
+
+    match select(defer_abort.into_future(), Box::pin(fut)).await {
+        Either::Left(_) => {
+            return Ok(());
+        }
+        Either::Right((res, _)) => {
+            return res;
+        }
+    }
 }
