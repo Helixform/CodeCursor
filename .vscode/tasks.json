@@ -16,20 +16,16 @@
             }
         },
         {
+            "label": "package:no-rust",
             "type": "npm",
-            "script": "watch-tests",
-            "problemMatcher": "$tsc-watch",
-            "isBackground": true,
+            "script": "package:no-rust",
+            "isBackground": false,
             "presentation": {
-                "reveal": "never",
-                "group": "watchers"
+                "reveal": "never"
             },
-            "group": "build"
-        },
-        {
-            "label": "tasks: watch-tests",
-            "dependsOn": ["npm: watch", "npm: watch-tests"],
-            "problemMatcher": []
+            "group": {
+                "kind": "build"
+            }
         }
     ]
 }

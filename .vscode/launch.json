@@ -18,18 +18,16 @@
 			"preLaunchTask": "${defaultBuildTask}"
 		},
 		{
-			"name": "Extension Tests",
+			"name": "Run Extension (Without Rust)",
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
+				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
 			"outFiles": [
-				"${workspaceFolder}/out/**/*.js",
 				"${workspaceFolder}/dist/**/*.js"
 			],
-			"preLaunchTask": "tasks: watch-tests"
+			"preLaunchTask": "package:no-rust"
 		}
 	]
 }

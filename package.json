@@ -34,6 +34,7 @@
         "compile-rust:dev": "cd crates/cursor-core && wasm-pack build --target nodejs --weak-refs --dev",
         "copy-rust": "cp crates/cursor-core/pkg/cursor_core_bg.wasm dist/cursor_core_bg.wasm",
         "watch": "webpack --watch",
+        "package:no-rust": "npm run compile && npm run copy-rust",
         "package:dev": "npm run compile-rust:dev && npm run compile && npm run copy-rust",
         "package": "npm run compile-rust && webpack --mode production --devtool hidden-source-map && npm run copy-rust",
         "compile-tests": "tsc -p . --outDir out",
