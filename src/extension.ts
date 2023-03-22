@@ -1,9 +1,7 @@
 import * as vscode from "vscode";
-import { GenerateSession, getScratchpadManager } from "./generate";
 
-const globalState = {
-    activeSession: null as GenerateSession | null,
-};
+import { GenerateSession, getScratchpadManager } from "./generate";
+import { getGlobalState } from "./globalState";
 
 async function handleGenerateCodeCommand() {
     const input = await vscode.window.showInputBox({
@@ -21,6 +19,7 @@ async function handleGenerateCodeCommand() {
     const selection = editor.selection;
 
     // End the active session first.
+    const globalState = getGlobalState();
     const activeSession = globalState.activeSession;
     if (activeSession) {
         activeSession.dispose();
@@ -32,28 +31,20 @@ async function handleGenerateCodeCommand() {
     globalState.activeSession = session;
 }
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-    // The command has been defined in the package.json file
-    // Now provide the implementation of the command with registerCommand
-    // The commandId parameter must match the command field in package.json
     context.subscriptions.push(
         vscode.commands.registerCommand("aicursor.generateCode", () => {
             handleGenerateCodeCommand();
-        })
-    );
-
-    context.subscriptions.push(
+        }),
         vscode.commands.registerCommand("aicursor.showLastResult", () => {
-            globalState.activeSession?.showResult();
-        })
-    );
-
-    context.subscriptions.push(
+            getGlobalState().activeSession?.showResult();
+        }),
         getScratchpadManager().registerTextDocumentContentProvider()
     );
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    const globalState = getGlobalState();
+    globalState.activeSession?.dispose();
+    globalState.activeSession = null;
+}

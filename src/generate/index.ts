@@ -1,2 +1,2 @@
-export { GenerateSession } from "./generate-session";
+export { GenerateSession } from "./generateSession";
 export { getScratchpadManager } from "./scratchpad";

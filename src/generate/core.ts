@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
-import path = require("path");
-import { ResultStream } from "./result-stream";
+
+import { ResultStream } from "./resultStream";
 import {
     generateCode as rustGenerateCode,
     ISelectionRange,
-} from "../../crates/cursor-core/pkg";
+} from "@crates/cursor-core";
 
 class SelectionRange implements ISelectionRange {
     private _offset: number;

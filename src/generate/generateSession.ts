@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { Scratchpad } from "./scratchpad";
-import { generateCode } from "./generate";
+import { generateCode } from "./core";
 
 export class GenerateSession {
     #prompt: string;
@@ -66,8 +66,22 @@ export class GenerateSession {
     }
 
     showResult() {
+        const scratchpad = this.#scratchpad;
+        if (!scratchpad) {
+            return;
+        }
+
         if (!this.#getOpenedResultTab()) {
-            this.#scratchpad?.showInDiffView();
+            vscode.commands.executeCommand(
+                "vscode.diff",
+                scratchpad.uriForOriginalContents,
+                scratchpad.uri,
+                null,
+                {
+                    viewColumn: vscode.ViewColumn.Beside,
+                    preview: true,
+                } as vscode.TextDocumentShowOptions
+            );
         }
 
         if (this.#errorOccurred) {
@@ -182,6 +196,7 @@ export class GenerateSession {
             return;
         }
 
+        // TODO: reconcile with the modified document.
         this.#editor
             .edit((editBuilder) => {
                 editBuilder.replace(this.#selection, scratchpad.contents);

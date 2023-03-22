@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 
-import { ResultStream } from "./result-stream";
+import { ResultStream } from "./resultStream";
 
 const URI_SCHEME = "ccsp";
 export function createUri(docId: string, orig: boolean = false): vscode.Uri {
@@ -97,17 +97,8 @@ export class Scratchpad implements ResultStream<string> {
         return createUri(this.id);
     }
 
-    showInDiffView() {
-        vscode.commands.executeCommand(
-            "vscode.diff",
-            createUri(this.id, true),
-            this.uri,
-            null,
-            {
-                viewColumn: vscode.ViewColumn.Beside,
-                preview: true,
-            } as vscode.TextDocumentShowOptions
-        );
+    get uriForOriginalContents(): vscode.Uri {
+        return createUri(this.id, true);
     }
 
     reset() {
