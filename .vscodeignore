@@ -9,6 +9,7 @@ target/**
 .gitignore
 .yarnrc
 Cargo.toml
+Cargo.lock
 webpack.config.js
 vsc-extension-quickstart.md
 **/tsconfig.json
