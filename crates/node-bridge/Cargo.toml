@@ -3,6 +3,11 @@ name = "node-bridge"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+futures = []
+http_client = ["futures"]
+all = ["http_client"]
+
 [dependencies]
 js-sys = "0.3"
 wasm-bindgen = "0.2"

@@ -8,8 +8,9 @@ use futures::future::{select, Either};
 use js_sys::{Object as JsObject, Reflect};
 use wasm_bindgen::prelude::*;
 
-use crate::bindings::{https::*, Buffer};
+use crate::bindings::https::*;
 use crate::futures::{AsyncIter, Defer};
+use crate::prelude::*;
 use crate::{closure, closure_once};
 
 /// The Request Method (VERB)
@@ -120,7 +121,7 @@ impl HttpRequest {
         req.on(
             "error",
             closure_once!(|err: JsValue| {
-                crate::bindings::console::error1(&err);
+                console::error1(&err);
                 defer_err_clone.resolve(err);
             })
             .into_js_value(),
@@ -134,7 +135,7 @@ impl HttpRequest {
         req.end();
 
         #[cfg(debug_assertions)]
-        crate::bindings::console::log2(&"request sent: ".into(), &req);
+        console::log2(&"request sent: ".into(), &req);
 
         // Wait for the response.
         let resp: IncomingMessage =
@@ -146,7 +147,7 @@ impl HttpRequest {
             .into();
 
         #[cfg(debug_assertions)]
-        crate::bindings::console::log2(&"response received: ".into(), &resp);
+        console::log2(&"response received: ".into(), &resp);
 
         Ok(HttpResponse::new(resp))
     }
@@ -172,7 +173,7 @@ impl HttpResponse {
             "data",
             closure!(|chunk: Buffer| {
                 #[cfg(debug_assertions)]
-                crate::bindings::console::log_str("chunk received");
+                console::log_str("chunk received");
                 data_stream_sender.send(Some(chunk));
             })
             .into_js_value(),
@@ -185,7 +186,7 @@ impl HttpResponse {
             "end",
             closure_once!(|| {
                 #[cfg(debug_assertions)]
-                crate::bindings::console::log_str("response ended");
+                console::log_str("response ended");
                 data_stream_sender_for_end.send(None);
                 defer_end_clone.resolve(JsValue::UNDEFINED);
             })
@@ -198,7 +199,7 @@ impl HttpResponse {
         resp.on(
             "error",
             closure_once!(|err: JsValue| {
-                crate::bindings::console::error1(&err);
+                console::error1(&err);
                 data_stream_sender_for_error.send(None);
                 defer_err_clone.resolve(err);
             })
