@@ -1,9 +1,16 @@
 # Change Log
 
-All notable changes to the "aicursor" extension will be documented in this file.
+## 0.2.0
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+### Fix
 
-## [Unreleased]
+-   Code generation may be interrupted unexpectedly sometimes
+-   Applying changes will fail when user switched text editors after the generation task is started
 
-- Initial release
+### Internal
+
+-   Core module refactor
+
+## 0.1.2
+
+-   Initial release
