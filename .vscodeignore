@@ -5,6 +5,7 @@ crates/**
 out/**
 node_modules/**
 src/**
+target/**
 .gitignore
 .yarnrc
 Cargo.toml
@@ -14,3 +15,4 @@ vsc-extension-quickstart.md
 **/.eslintrc.json
 **/*.map
 **/*.ts
+**/*.rs

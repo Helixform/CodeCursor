@@ -2,7 +2,7 @@
 
 **Use Cursor right in the editor you love!**
 
-First of all, We would like to thank **Cursor Team** for their brilliant works. Please give their app a try!
+First of all, We would like to thank **Cursor Team** for their brilliant works. Please give their [app](https://www.cursor.so) a try!
 
 ## What's Cursor? And Why This Extension?
 
