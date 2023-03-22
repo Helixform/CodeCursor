@@ -61,7 +61,7 @@ pub struct AsyncIterSender<T> {
 
 pin_project! {
     pub struct AsyncIterInner<T> {
-        ready_values: VecDeque<T>,
+        ready_values: VecDeque<Option<T>>,
         defer_next: Option<Defer>,
         #[pin]
         active_fut: Option<JsFuture>,
@@ -97,7 +97,7 @@ impl<T> Stream for AsyncIter<T> {
 }
 
 impl<T> AsyncIterSender<T> {
-    pub fn send(&mut self, value: T) {
+    pub fn send(&mut self, value: Option<T>) {
         let mut inner_mut = self.inner.borrow_mut();
         inner_mut.ready_values.push_back(value);
 
@@ -113,7 +113,6 @@ impl<T> Stream for AsyncIterInner<T> {
     type Item = T;
 
     fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        crate::bindings::console::log_str("poll once");
         let mut this = self.project();
 
         if let Some(fut) = this.active_fut.as_mut().as_pin_mut() {
@@ -126,7 +125,7 @@ impl<T> Stream for AsyncIterInner<T> {
         }
 
         if let Some(value) = this.ready_values.pop_front() {
-            return Poll::Ready(Some(value));
+            return Poll::Ready(value);
         }
 
         let defer = Defer::new();

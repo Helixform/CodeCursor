@@ -5,7 +5,7 @@
     "tasks": [
         {
             "type": "npm",
-            "script": "build:dev",
+            "script": "package:dev",
             "isBackground": false,
             "presentation": {
                 "reveal": "never"
