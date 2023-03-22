@@ -26,6 +26,8 @@ const IGENERATE_INPUT: &'static str = r#"
 interface IGenerateInput {
     get prompt(): string;
     get documentText(): string;
+    get filePath(): string;
+    get workspaceDirectory(): string | null;
     get selectionRange(): ISelectionRange;
     get resultStream(): IResultStream;
 }
@@ -66,6 +68,12 @@ extern "C" {
     #[wasm_bindgen(method, getter, structural, js_name = "documentText")]
     pub fn document_text(this: &GenerateInput) -> String;
 
+    #[wasm_bindgen(method, getter, structural, js_name = "filePath")]
+    pub fn file_path(this: &GenerateInput) -> String;
+
+    #[wasm_bindgen(method, getter, structural, js_name = "workspaceDirectory")]
+    pub fn workspace_directory(this: &GenerateInput) -> Option<String>;
+
     #[wasm_bindgen(method, getter, structural, js_name = "selectionRange")]
     pub fn selection_range(this: &GenerateInput) -> SelectionRange;
 
@@ -93,7 +101,14 @@ fn split_code_into_blocks(code: &str) -> Vec<String> {
 
 #[wasm_bindgen(js_name = generateCode)]
 pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
-    let file_path = "file_path";
+    let file_path = input.file_path();
+    let file_dir = file_path
+        .split("/")
+        .take(file_path.split("/").count() - 1)
+        .collect::<Vec<&str>>()
+        .join("/");
+    node_bridge::bindings::console::log_str(&format!("file_dir: {}", file_dir));
+    let workspace_directory = input.workspace_directory();
     let selection = input.selection_range();
     let document_text_utf16: Vec<u16> = input.document_text().encode_utf16().collect();
 
@@ -118,23 +133,15 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
 
     let user_request = UserRequest::new(
         prompt,
-        ".".to_owned(),
+        file_dir,
         file_path.to_owned(),
         input.document_text(),
         split_code_into_blocks(&preceding_code),
         split_code_into_blocks(&following_code),
         selection_text,
-        vec![],
-        vec![],
         message_type,
-        0,
     );
-    let mut request_body = RequestBody::new(
-        user_request,
-        vec![],
-        "copilot".to_owned(),
-        Some(".".to_owned()),
-    );
+    let mut request_body = RequestBody::new(user_request, vec![], workspace_directory);
 
     let result_stream = input.result_stream();
 
@@ -157,19 +164,12 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
             if conversation_id.is_none() {
                 conversation_id = Some(node_bridge::bindings::uuid::uuid_v4());
             }
-            let timestamp = chrono::Utc::now().timestamp_millis();
             let bot_message = BotMessage::new(
-                "bot".to_owned(),
-                timestamp,
                 conversation_id.clone().unwrap(),
                 message_type,
                 previous_message.clone(),
                 last_token.clone(),
-                false,
                 file_path.to_owned(),
-                true,
-                0,
-                true,
             );
             request_body.bot_messages = vec![bot_message];
         }

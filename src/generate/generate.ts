@@ -11,17 +11,23 @@ import {
 class GenerateInput implements IGenerateInput {
     private _prompt: string;
     private _documentText: string;
+    private _filePath: string;
+    private _workspaceDirectory: string | null;
     private _selectionRange: ISelectionRange;
     private _resultStream: IResultStream;
 
     constructor(
         prompt: string,
         documentText: string,
+        filePath: string,
+        workspaceDirectory: string | null,
         selectionRange: ISelectionRange,
         resultStream: IResultStream
     ) {
         this._prompt = prompt;
         this._documentText = documentText;
+        this._filePath = filePath;
+        this._workspaceDirectory = workspaceDirectory;
         this._selectionRange = selectionRange;
         this._resultStream = resultStream;
     }
@@ -32,6 +38,14 @@ class GenerateInput implements IGenerateInput {
 
     get documentText(): string {
         return this._documentText;
+    }
+
+    get filePath(): string {
+        return this._filePath;
+    }
+
+    get workspaceDirectory(): string | null {
+        return this._workspaceDirectory;
     }
 
     get selectionRange(): ISelectionRange {
@@ -68,6 +82,9 @@ export async function generateCode(
     resultStream: ResultStream<String>
 ): Promise<void> {
     const document = editor.document;
+    const filePath = document.uri.fsPath;
+    const workspaceDirectory =
+        vscode.workspace.workspaceFolders?.[0].uri.fsPath ?? null;
     const selection = editor.selection;
     const text = document.getText();
     const selectionStartOffset = document.offsetAt(selection.start);
@@ -78,6 +95,13 @@ export async function generateCode(
     );
 
     await rustGenerateCode(
-        new GenerateInput(prompt, text, selectionRange, resultStream)
+        new GenerateInput(
+            prompt,
+            text,
+            filePath,
+            workspaceDirectory,
+            selectionRange,
+            resultStream
+        )
     );
 }

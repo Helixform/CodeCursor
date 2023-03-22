@@ -80,6 +80,7 @@ dependencies = [
  "chrono",
  "futures",
  "getrandom",
+ "js-sys",
  "node-bridge",
  "serde",
  "serde_json",

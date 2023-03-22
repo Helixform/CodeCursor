@@ -29,17 +29,20 @@ impl RequestBody {
     pub fn new(
         user_request: UserRequest,
         bot_messages: Vec<BotMessage>,
-        context_type: String,
         root_path: Option<String>,
     ) -> Self {
         Self {
             user_request,
             bot_messages,
             user_messages: vec![],
-            context_type,
+            context_type: "copilot".to_owned(),
             root_path,
         }
     }
+}
+
+fn random() -> i32 {
+    js_sys::Math::floor(js_sys::Math::random() * 1000.0) as i32
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -89,10 +92,7 @@ impl UserRequest {
         preceding_code: Vec<String>,
         suffix_code: Vec<String>,
         current_selection: Option<String>,
-        copilot_code_blocks: Vec<String>,
-        custom_code_blocks: Vec<String>,
         message_type: MessageType,
-        max_original_line: i32,
     ) -> Self {
         Self {
             message,
@@ -102,11 +102,11 @@ impl UserRequest {
             preceding_code,
             suffix_code,
             current_selection,
-            copilot_code_blocks,
-            custom_code_blocks,
+            copilot_code_blocks: vec![],
+            custom_code_blocks: vec![],
             code_block_identifiers: vec![],
             message_type,
-            max_original_line,
+            max_original_line: random(),
         }
     }
 }
@@ -149,30 +149,24 @@ pub struct BotMessage {
 
 impl BotMessage {
     pub fn new(
-        sender: String,
-        send_at: i64,
         conversation_id: String,
         message_type: MessageType,
         message: String,
         last_token: String,
-        finished: bool,
         current_file: String,
-        interrupted: bool,
-        max_original_line: i32,
-        hit_token_limit: bool,
     ) -> Self {
         Self {
-            sender,
-            send_at,
+            sender: "bot".to_owned(),
+            send_at: chrono::Utc::now().timestamp_millis(),
             conversation_id,
             message_type,
             message,
             last_token,
-            finished,
+            finished: false,
             current_file,
-            interrupted,
-            max_original_line,
-            hit_token_limit,
+            interrupted: true,
+            max_original_line: random(),
+            hit_token_limit: true,
         }
     }
 }
