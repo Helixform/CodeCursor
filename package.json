@@ -4,6 +4,10 @@
     "description": "Cursor integration for Visual Studio Code",
     "version": "0.2.0",
     "publisher": "ktiays",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Helixform/CodeCursor"
+    },
     "icon": "icon.png",
     "engines": {
         "vscode": "^1.76.0"
