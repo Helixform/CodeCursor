@@ -6,7 +6,7 @@ import {
     ISelectionRange,
 } from "@crates/cursor-core";
 
-class SelectionRange implements ISelectionRange {
+export class SelectionRange implements ISelectionRange {
     private _offset: number;
     private _length: number;
 
@@ -27,7 +27,7 @@ class SelectionRange implements ISelectionRange {
 export async function generateCode(
     prompt: string,
     document: vscode.TextDocument,
-    selection: vscode.Selection,
+    selectionRange: SelectionRange,
     cancellationToken: vscode.CancellationToken,
     resultStream: ResultStream<String>
 ): Promise<void> {
@@ -35,12 +35,6 @@ export async function generateCode(
     const workspaceDirectory =
         vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath ?? null;
     const documentText = document.getText();
-    const selectionStartOffset = document.offsetAt(selection.start);
-    const selectionEndOffset = document.offsetAt(selection.end);
-    const selectionRange = new SelectionRange(
-        selectionStartOffset,
-        selectionEndOffset - selectionStartOffset
-    );
 
     const abortController = new AbortController();
     cancellationToken.onCancellationRequested(() => {

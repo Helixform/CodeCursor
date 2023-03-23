@@ -1,23 +1,34 @@
 import * as vscode from "vscode";
+import { diff_match_patch } from 'diff-match-patch';
 
 import { Scratchpad } from "./scratchpad";
-import { generateCode } from "./core";
+import { generateCode, SelectionRange } from "./core";
 
 export class GenerateSession {
     #prompt: string;
-    #selection: vscode.Selection;
+    #selectionRange: SelectionRange;
     #document: vscode.TextDocument;
+    #documentSnapshot: string;
     #scratchpad: Scratchpad | null;
     #errorOccurred = false;
     #statusBarItem: vscode.StatusBarItem | null = null;
 
     constructor(prompt: string, editor: vscode.TextEditor) {
         const { document, selection } = editor;
+        const documentSnapshot = document.getText();
         const selectionText = document.getText(selection);
 
+        const selectionStartOffset = document.offsetAt(selection.start);
+        const selectionEndOffset = document.offsetAt(selection.end);
+        const selectionRange = new SelectionRange(
+            selectionStartOffset,
+            selectionEndOffset - selectionStartOffset
+        );
+
         this.#prompt = prompt;
-        this.#selection = selection;
+        this.#selectionRange = selectionRange;
         this.#document = document;
+        this.#documentSnapshot = documentSnapshot;
         this.#scratchpad = new Scratchpad(selectionText);
     }
 
@@ -48,7 +59,7 @@ export class GenerateSession {
                     await generateCode(
                         this.#prompt,
                         this.#document,
-                        this.#selection,
+                        this.#selectionRange,
                         token,
                         scratchpad
                     );
@@ -211,13 +222,53 @@ export class GenerateSession {
             );
             return;
         }
+        const { document } = editor;
 
-        // TODO: reconcile with the modified document.
+        // Use DMP to reconcile the generated contents with the modified document.
+        const selectionRange = this.#selectionRange;
+        const originalContents = this.#documentSnapshot;
+        const patchedOriginalContents =
+            originalContents.substring(0, selectionRange.offset) +
+            scratchpad.contents +
+            originalContents.substring(selectionRange.offset + selectionRange.length);
+
+        const dmp = new diff_match_patch();
+        const diff = dmp.diff_main(originalContents, patchedOriginalContents, true);
+        const patch = dmp.patch_make(originalContents, patchedOriginalContents, diff);
+
+        const currentContents = document.getText() || '';
+        const patchApplyResults = dmp.patch_apply(patch, currentContents);
+
+        // Check whether we can apply the changes.
+        const hasPatchFailures = patchApplyResults[1].filter(ok => !ok).length;
+        if (hasPatchFailures) {
+            vscode.window.showWarningMessage(
+                "The document has changed, cannot apply the changes automatically now. You " +
+                "can still copy the generated contents back manually."
+            );
+            return;
+        }
+
+        // We got a complete patched contents here, it's fine to fully replace it to the
+        // document buffer. This is an asynchronous process, however, VSCode will make
+        // sure that there will be no concurrent changes.
+        const finalContents = patchApplyResults[0];
         editor
             .edit((editBuilder) => {
-                editBuilder.replace(this.#selection, scratchpad.contents);
+                const rangeStart = document.positionAt(0);
+                const rangeEnd = document.positionAt(currentContents.length);
+                editBuilder.replace(new vscode.Range(rangeStart, rangeEnd), finalContents);
             })
-            .then(() => {
+            .then((success) => {
+                if (!success) {
+                    // Concurrent modifications did happen, just let user try again.
+                    vscode.window.showWarningMessage(
+                        "Failed to apply the changes, maybe there are concurrent " +
+                        "modifications. You can try again later."
+                    );
+                    return;
+                }
+
                 // Dispose self after changes are applied.
                 this.dispose();
             });

@@ -60,6 +60,7 @@
         "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
+        "@types/diff-match-patch": "^1.0.32",
         "@types/glob": "^8.1.0",
         "@types/mocha": "^10.0.1",
         "@types/node": "16.x",
@@ -76,6 +77,7 @@
         "webpack-cli": "^5.0.1"
     },
     "dependencies": {
+        "diff-match-patch": "^1.0.5",
         "uuid": "^9.0.0"
     }
 }
