@@ -3,6 +3,7 @@ import { diff_match_patch } from 'diff-match-patch';
 
 import { Scratchpad } from "./scratchpad";
 import { generateCode, SelectionRange } from "./core";
+import { getOpenedTab } from '../utils';
 
 export class GenerateSession {
     #prompt: string;
@@ -80,7 +81,7 @@ export class GenerateSession {
             return;
         }
 
-        if (!this.#getOpenedResultTab()) {
+        if (!getOpenedTab(scratchpad.uri)) {
             vscode.commands.executeCommand(
                 "vscode.diff",
                 scratchpad.uriForOriginalContents,
@@ -101,7 +102,12 @@ export class GenerateSession {
     }
 
     hideResult() {
-        const openedResultTab = this.#getOpenedResultTab();
+        const scratchpad = this.#scratchpad;
+        if (!scratchpad) {
+            return;
+        }
+
+        const openedResultTab = getOpenedTab(scratchpad.uri);
         if (!openedResultTab) {
             return;
         }
@@ -118,29 +124,6 @@ export class GenerateSession {
         this.#errorOccurred = false;
 
         this.start();
-    }
-
-    #getOpenedResultTab(): vscode.Tab | null {
-        const scratchpad = this.#scratchpad;
-        if (!scratchpad) {
-            return null;
-        }
-
-        const thisUriString = scratchpad.uri.toString();
-        const tabGroups = vscode.window.tabGroups;
-        for (const tabGroup of tabGroups.all) {
-            for (const tab of tabGroup.tabs) {
-                const tabInput = tab.input;
-                if (!(tabInput instanceof vscode.TabInputTextDiff)) {
-                    continue;
-                }
-                if (tabInput.modified.toString() === thisUriString) {
-                    return tab;
-                }
-            }
-        }
-
-        return null;
     }
 
     #getEditor(): vscode.TextEditor | null {
