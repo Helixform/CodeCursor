@@ -38,8 +38,10 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
         .take(file_path.split("/").count() - 1)
         .collect::<Vec<&str>>()
         .join("/");
+
     #[cfg(debug_assertions)]
-    node_bridge::bindings::console::log_str(&format!("file_dir: {}", file_dir));
+    console::log_str(&format!("file_dir: {}", file_dir));
+
     let workspace_directory = input.workspace_directory();
     let selection = input.selection_range();
     let document_text_utf16: Vec<u16> = input.document_text().encode_utf16().collect();
@@ -129,8 +131,10 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
         let body = response.body();
         while let Some(chunk) = body.next().await {
             let chunk = chunk.to_string("utf-8");
+
             #[cfg(debug_assertions)]
-            console::log_str(&chunk);
+            console::log_str(&format!("got chunk: ```\n{}\n```", &chunk));
+
             let lines = chunk.split("\n").filter(|l| l.len() > 0);
             let mut message_ended = false;
             for line in lines {
@@ -178,7 +182,7 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
         response.await?;
     }
 
-    node_bridge::bindings::console::log_str("generate done");
+    console::log_str("generate done");
 
     result_stream.end();
     Ok(())
