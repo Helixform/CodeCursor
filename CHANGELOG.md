@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.2.1
+
+### Add
+
+-   Automatically merge the generated contents to the current document
+
 ## 0.2.0
 
 ### Fix
