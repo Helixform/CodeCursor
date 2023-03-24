@@ -3,6 +3,7 @@
 "use strict";
 
 const path = require("path");
+const { DefinePlugin } = require("webpack");
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -40,5 +41,12 @@ const extensionConfig = {
     infrastructureLogging: {
         level: "log", // enables logging required for problem matchers
     },
+    plugins: [
+        new DefinePlugin({
+            "process.env": {
+                NODE_ENV: JSON.stringify(process.env.NODE_ENV || "development"),
+            },
+        }),
+    ],
 };
 module.exports = [extensionConfig];
