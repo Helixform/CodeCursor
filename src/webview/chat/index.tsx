@@ -4,11 +4,13 @@ import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
 
 import "./style.css";
 import { MessageItem, MessageItemModel } from "./MessageItem";
+import { ChatViewServiceImpl } from "./chatViewServiceImpl";
 import { getServiceManager } from "../../common/ipc/webview";
 import { IChatService, CHAT_SERVICE_NAME } from "../../common/chatService";
 
 export function ChatPage() {
     const [messages, setMessages] = useState([] as MessageItemModel[]);
+    const [hasSelection, setHasSelection] = useState(false);
     const [prompt, setPrompt] = useState("");
     useEffect(() => {
         setMessages(
@@ -23,6 +25,10 @@ export function ChatPage() {
                 };
             })
         );
+
+        const viewServiceImpl = new ChatViewServiceImpl();
+        viewServiceImpl.setHasSelectionAction = setHasSelection;
+        getServiceManager().registerService(viewServiceImpl);
     }, []);
 
     const handleAskAction = useCallback(async () => {
@@ -55,7 +61,9 @@ export function ChatPage() {
                 <VSCodeTextArea
                     style={{ width: "100%" }}
                     rows={3}
-                    placeholder="Talk about the whole document..."
+                    placeholder={`Talk about the ${
+                        hasSelection ? "selected contents" : "whole document"
+                    }...`}
                     value={prompt}
                     onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                         setPrompt(e.target.value);

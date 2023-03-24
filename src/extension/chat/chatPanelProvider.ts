@@ -3,6 +3,10 @@ import * as vscode from "vscode";
 import { getNonce } from "../utils";
 import { sharedChatServiceImpl } from "./chatServiceImpl";
 import { ExtensionHostServiceManager } from "../../common/ipc/extensionHost";
+import {
+    IChatViewService,
+    CHAT_VIEW_SERVICE_NAME,
+} from "../../common/chatService";
 
 export class ChatPanelProvider implements vscode.WebviewViewProvider {
     static readonly viewType = "chat";
@@ -35,7 +39,20 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
 
         const serviceManager = new ExtensionHostServiceManager(webview);
         serviceManager.registerService(sharedChatServiceImpl());
+
+        const eventDisposable = vscode.window.onDidChangeTextEditorSelection(
+            async (e) => {
+                const hasSelection = !e.selections[0].isEmpty;
+                const chatViewService =
+                    await serviceManager.getService<IChatViewService>(
+                        CHAT_VIEW_SERVICE_NAME
+                    );
+                await chatViewService.setHasSelection(hasSelection);
+            }
+        );
+
         webviewView.onDidDispose(() => {
+            eventDisposable.dispose();
             serviceManager.dispose();
         });
     }
