@@ -16,7 +16,9 @@ export function MessageItem(props: MessageItemProps) {
     return (
         <div className="chat-msg">
             {isReply ? <div className="chat-msg-reply-bg" /> : null}
-            <div className="chat-msg-contents">{contents}</div>
+            <div className={`chat-msg-contents ${!isReply ? "align-end" : ""}`}>
+                {contents}
+            </div>
         </div>
     );
 }
