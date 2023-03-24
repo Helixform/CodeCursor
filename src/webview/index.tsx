@@ -1,7 +1,8 @@
-import * as React from 'react';
-import { createRoot } from 'react-dom/client';
+import * as React from "react";
+import { createRoot } from "react-dom/client";
 
-import { ChatPage } from './chat';
+import "./style.css";
+import { ChatPage } from "./chat";
 
 function App() {
     const pageName = window.__codeCursorPageName;

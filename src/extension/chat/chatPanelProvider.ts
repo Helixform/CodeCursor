@@ -47,7 +47,7 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ; script-src 'nonce-${nonce}';">
                 <title>CodeCursor</title>
                 <script nonce="${nonce}">
                     window.__codeCursorPageName = "chat";
