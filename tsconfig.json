@@ -9,6 +9,7 @@
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
         "noUnusedParameters": true,
+        "jsx": "react",
         "paths": {
             "@crates/cursor-core": ["./crates/cursor-core/pkg"]
         }

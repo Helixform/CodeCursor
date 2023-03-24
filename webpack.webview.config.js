@@ -9,31 +9,20 @@ const path = require("path");
 
 /** @type WebpackConfig */
 const extensionConfig = {
-    target: "node",
     mode: "none",
 
-    entry: "./src/extension/index.ts",
+    entry: "./src/webview/index.tsx",
     output: {
         path: path.resolve(__dirname, "dist"),
-        filename: "extension.js",
-        libraryTarget: "commonjs2",
-    },
-    externals: {
-        vscode: "commonjs vscode",
+        filename: "webview.js",
     },
     resolve: {
-        extensions: [".ts", ".js"],
-        alias: {
-            "@crates/cursor-core": path.resolve(
-                __dirname,
-                "crates/cursor-core/pkg"
-            ),
-        },
+        extensions: [".ts", ".tsx", ".js", ".jsx"],
     },
     module: {
         rules: [
             {
-                test: /\.ts$/,
+                test: /\.tsx?$/,
                 exclude: /node_modules/,
                 use: [
                     {

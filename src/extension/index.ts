@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 
 import { GenerateSession, getScratchpadManager } from "./generate";
 import { getGlobalState } from "./globalState";
+import { ChatPanelProvider } from "./chat/chatPanelProvider";
 
 async function handleGenerateCodeCommand() {
     const input = await vscode.window.showInputBox({
@@ -38,7 +39,11 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("aicursor.showLastResult", () => {
             getGlobalState().activeSession?.showResult();
         }),
-        getScratchpadManager().registerTextDocumentContentProvider()
+        getScratchpadManager().registerTextDocumentContentProvider(),
+        vscode.window.registerWebviewViewProvider(
+            ChatPanelProvider.viewType,
+            new ChatPanelProvider(context)
+        )
     );
 }
 
