@@ -35,8 +35,23 @@
     height: 100%;
     background-color: var(--vscode-foreground);
     opacity: 0.06;
+    pointer-events: none;
 }
 
 .chat-msg-contents {
+    display: flex;
     padding: 0 16px;
+    user-select: text;
+    -webkit-user-select: text;
+    -webkit-user-drag: auto;
+}
+
+.chat-msg-contents::selection {
+    background-color: var(--vscode-editor-selectionBackground);
+    color: var(--vscode-editor-selectionForeground);
+}
+
+.chat-msg-contents.align-end {
+    justify-content: end;
+    padding-right: 24px;
 }
