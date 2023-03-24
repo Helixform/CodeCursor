@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
 
 import { getNonce } from "../utils";
+import { sharedChatServiceImpl } from "./chatServiceImpl";
+import { ExtensionHostServiceManager } from "../../common/ipc/extensionHost";
 
 export class ChatPanelProvider implements vscode.WebviewViewProvider {
     static readonly viewType = "chat";
@@ -30,6 +32,12 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
             webview,
             baseUri
         );
+
+        const serviceManager = new ExtensionHostServiceManager(webview);
+        serviceManager.registerService(sharedChatServiceImpl());
+        webviewView.onDidDispose(() => {
+            serviceManager.dispose();
+        });
     }
 
     static #buildWebviewContents(

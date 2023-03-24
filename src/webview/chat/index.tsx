@@ -1,9 +1,11 @@
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
 
 import "./style.css";
 import { MessageItem, MessageItemModel } from "./MessageItem";
+import { getServiceManager } from "../../common/ipc/webview";
+import { IChatService, CHAT_SERVICE_NAME } from "../../common/chatService";
 
 export function ChatPage() {
     const [messages, setMessages] = useState([] as MessageItemModel[]);
@@ -23,6 +25,25 @@ export function ChatPage() {
         );
     }, []);
 
+    const handleAskAction = useCallback(async () => {
+        const chatService = await getServiceManager().getService<IChatService>(
+            CHAT_SERVICE_NAME
+        );
+        const msgId = await chatService.confirmPrompt(prompt);
+        setMessages((prev) => {
+            return [
+                ...prev,
+                { id: "" + (prev.length + 1), contents: prompt },
+                {
+                    id: "" + (prev.length + 2),
+                    contents: `fake reply ${msgId}`,
+                    isReply: true,
+                },
+            ];
+        });
+        setPrompt("");
+    }, [prompt, setPrompt, setMessages]);
+
     return (
         <div className="chat-root">
             <div className="chat-list">
@@ -40,7 +61,12 @@ export function ChatPage() {
                         setPrompt(e.target.value);
                     }}
                 />
-                <VSCodeButton disabled={prompt.length === 0}>Ask</VSCodeButton>
+                <VSCodeButton
+                    disabled={prompt.length === 0}
+                    onClick={handleAskAction}
+                >
+                    Ask
+                </VSCodeButton>
             </div>
         </div>
     );
