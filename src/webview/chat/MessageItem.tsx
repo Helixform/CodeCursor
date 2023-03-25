@@ -1,10 +1,6 @@
 import * as React from "react";
 
-export interface MessageItemModel {
-    id: string;
-    contents: string;
-    isReply?: boolean;
-}
+import { MessageItemModel } from "../../common/chatService/model";
 
 export interface MessageItemProps {
     model: MessageItemModel;

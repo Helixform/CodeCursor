@@ -10,7 +10,7 @@ export async function chat(
     prompt: string,
     document: vscode.TextDocument,
     selectionRange: SelectionRange,
-    cancellationToken: vscode.CancellationToken,
+    abortSignal: AbortSignal,
     resultStream: ResultStream<String>
 ): Promise<void> {
     if (isProcessing) {
@@ -21,12 +21,6 @@ export async function chat(
     const workspaceDirectory =
         vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath ?? null;
     const documentText = document.getText();
-
-    const abortController = new AbortController();
-    cancellationToken.onCancellationRequested(() => {
-        abortController.abort();
-    });
-    const { signal: abortSignal } = abortController;
 
     try {
         isProcessing = true;

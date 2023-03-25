@@ -3,19 +3,19 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
 
 import "./style.css";
-import { MessageItem, MessageItemModel } from "./MessageItem";
+import { MessageItem } from "./MessageItem";
 import { ChatViewServiceImpl } from "./chatViewServiceImpl";
 import { getServiceManager } from "../../common/ipc/webview";
 import { IChatService, CHAT_SERVICE_NAME } from "../../common/chatService";
+import { MessageItemModel } from "../../common/chatService/model";
 
 function messagesWithUpdatedBotMessage(
     msgs: MessageItemModel[],
-    updatedMsgId: number,
-    contents: string
+    updatedMsg: MessageItemModel
 ): MessageItemModel[] {
     return msgs.map((msg) => {
-        if ("bot" + updatedMsgId === msg.id) {
-            return { id: msg.id, contents, isReply: msg.isReply };
+        if (updatedMsg.id === msg.id) {
+            return updatedMsg;
         }
         return msg;
     });
@@ -27,37 +27,29 @@ export function ChatPage() {
     const [prompt, setPrompt] = useState("");
 
     // Dependent on `setMessages`, which will never change.
-    const updateMessageAction = useCallback(
-        (msgId: number, contents: string) => {
-            setMessages((prev) => {
-                return messagesWithUpdatedBotMessage(prev, msgId, contents);
-            });
-        },
-        []
-    );
+    const addMessageAction = useCallback((msg: MessageItemModel) => {
+        setMessages((prev) => {
+            return [...prev, msg];
+        });
+    }, []);
+    const updateMessageAction = useCallback((msg: MessageItemModel) => {
+        setMessages((prev) => {
+            return messagesWithUpdatedBotMessage(prev, msg);
+        });
+    }, []);
 
     const handleAskAction = useCallback(async () => {
         const chatService = await getServiceManager().getService<IChatService>(
             CHAT_SERVICE_NAME
         );
-        const msgId = await chatService.confirmPrompt(prompt);
-        setMessages((prev) => {
-            return [
-                ...prev,
-                { id: "user" + (prev.length + 1), contents: prompt },
-                {
-                    id: "bot" + msgId,
-                    contents: "",
-                    isReply: true,
-                },
-            ];
-        });
+        await chatService.confirmPrompt(prompt);
         setPrompt("");
     }, [prompt, setPrompt, setMessages]);
 
     useEffect(() => {
         const viewServiceImpl = new ChatViewServiceImpl();
         viewServiceImpl.setHasSelectionAction = setHasSelection;
+        viewServiceImpl.addMessageAction = addMessageAction;
         viewServiceImpl.updateMessageAction = updateMessageAction;
         getServiceManager().registerService(viewServiceImpl);
     }, []);
