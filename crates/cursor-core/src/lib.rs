@@ -1,4 +1,7 @@
+mod chat;
 mod generate;
+mod models;
+mod request;
 
 use node_bridge::bindings::AbortSignal;
 use wasm_bindgen::prelude::*;
@@ -44,6 +47,12 @@ extern "C" {
     pub fn length(this: &SelectionRange) -> usize;
 }
 
+impl SelectionRange {
+    pub fn is_empty(&self) -> bool {
+        self.length() == 0
+    }
+}
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "IResultStream")]
@@ -81,4 +90,15 @@ extern "C" {
 
     #[wasm_bindgen(method, getter, structural, js_name = abortSignal)]
     pub fn abort_signal(this: &GenerateInput) -> AbortSignal;
+}
+
+impl GenerateInput {
+    pub fn file_dir(&self) -> String {
+        let file_path = self.file_path();
+        return file_path
+            .split("/")
+            .take(file_path.split("/").count() - 1)
+            .collect::<Vec<&str>>()
+            .join("/");
+    }
 }
