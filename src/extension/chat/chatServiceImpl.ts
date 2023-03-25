@@ -1,22 +1,20 @@
 import * as vscode from "vscode";
 
 import { IChatService, CHAT_SERVICE_NAME } from "../../common/chatService";
+import { MessageItemModel } from "../../common/chatService/model";
 import { SelectionRange } from "../generate/core";
 import { chat } from "./core";
 
-export interface ChatMessage {
-    id: number;
-    contents: string;
-}
-
 export interface ChatServiceClient {
-    handleMessageChange?: (msg: ChatMessage) => void;
+    handleNewMessage?: (msg: MessageItemModel) => void;
+    handleMessageChange?: (msg: MessageItemModel) => void;
 }
 
 export class ChatServiceImpl implements IChatService {
     #currentMessageId = 0;
-    #messages = new Map<number, ChatMessage>();
+    #messages = new Map<string, MessageItemModel>();
     #clients = new Set<ChatServiceClient>();
+    #currentAbortController: AbortController | null = null;
 
     get name(): string {
         return CHAT_SERVICE_NAME;
@@ -28,20 +26,41 @@ export class ChatServiceImpl implements IChatService {
 
     detachClient(client: ChatServiceClient) {
         this.#clients.delete(client);
+
+        if (this.#clients.size === 0) {
+            // Abort the session when no clients connected.
+            this.#currentAbortController?.abort();
+            this.#currentAbortController = null;
+        }
     }
 
-    notifyClientMessageChange(msgId: number) {
+    #addMessage(msg: MessageItemModel): string {
+        const id = ++this.#currentMessageId;
+        msg.id = msg.isReply ? `bot:${id}` : `user:${id}`;
+        this.#messages.set(msg.id, msg);
+
+        for (const client of this.#clients) {
+            client.handleNewMessage?.call(client, msg);
+        }
+
+        return msg.id;
+    }
+
+    #updateMessage(msgId: string, newContents: string, finished?: boolean) {
         const msg = this.#messages.get(msgId);
         if (!msg) {
             return;
         }
+
+        msg.contents += newContents;
+        msg.isFinished = finished;
 
         for (const client of this.#clients) {
             client.handleMessageChange?.call(client, msg);
         }
     }
 
-    async confirmPrompt(prompt: string): Promise<number> {
+    async confirmPrompt(prompt: string): Promise<void> {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             throw new Error("No active editor");
@@ -56,12 +75,25 @@ export class ChatServiceImpl implements IChatService {
             selectionEndOffset - selectionStartOffset
         );
 
-        const id = ++this.#currentMessageId;
-        const msg: ChatMessage = {
-            id,
+        this.#addMessage({
+            id: "",
+            contents: prompt,
+        });
+        const replyMsgId = this.#addMessage({
+            id: "",
             contents: "",
+            isReply: true,
+        });
+
+        const that = this;
+        const resultStream = {
+            write(value: string) {
+                that.#updateMessage(replyMsgId, value as string);
+            },
+            end() {
+                that.#updateMessage(replyMsgId, "", true);
+            },
         };
-        this.#messages.set(id, msg);
 
         vscode.window.withProgress(
             {
@@ -70,25 +102,27 @@ export class ChatServiceImpl implements IChatService {
                 cancellable: true,
             },
             async (_progress, token) => {
+                const abortController = new AbortController();
+                token.onCancellationRequested(() => {
+                    abortController.abort();
+                });
+                this.#currentAbortController = abortController;
+
                 try {
-                    const that = this;
-                    await chat(prompt, document, selectionRange, token, {
-                        write(value) {
-                            msg.contents += value;
-                            that.notifyClientMessageChange(msg.id);
-                        },
-                        end() {
-                            console.log("end");
-                        },
-                    });
+                    await chat(
+                        prompt,
+                        document,
+                        selectionRange,
+                        abortController.signal,
+                        resultStream
+                    );
                 } catch (e) {
                     console.error(e);
-                    return;
+                } finally {
+                    this.#currentAbortController = null;
                 }
             }
         );
-
-        return id;
     }
 }
 

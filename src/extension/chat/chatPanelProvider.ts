@@ -1,16 +1,13 @@
 import * as vscode from "vscode";
 
 import { getNonce } from "../utils";
-import {
-    sharedChatServiceImpl,
-    ChatServiceClient,
-    ChatMessage,
-} from "./chatServiceImpl";
+import { sharedChatServiceImpl, ChatServiceClient } from "./chatServiceImpl";
 import { ExtensionHostServiceManager } from "../../common/ipc/extensionHost";
 import {
     IChatViewService,
     CHAT_VIEW_SERVICE_NAME,
 } from "../../common/chatService";
+import { MessageItemModel } from "../../common/chatService/model";
 
 export class ChatPanelProvider
     implements vscode.WebviewViewProvider, ChatServiceClient
@@ -69,7 +66,7 @@ export class ChatPanelProvider
         });
     }
 
-    handleMessageChange(msg: ChatMessage): void {
+    handleNewMessage(msg: MessageItemModel): void {
         const serviceManager = this.#serviceManager;
         if (!serviceManager) {
             return;
@@ -78,7 +75,20 @@ export class ChatPanelProvider
         serviceManager
             .getService<IChatViewService>(CHAT_VIEW_SERVICE_NAME)
             .then((service) => {
-                service.updateMessage(msg.id, msg.contents);
+                service.addMessage(msg);
+            });
+    }
+
+    handleMessageChange(msg: MessageItemModel): void {
+        const serviceManager = this.#serviceManager;
+        if (!serviceManager) {
+            return;
+        }
+
+        serviceManager
+            .getService<IChatViewService>(CHAT_VIEW_SERVICE_NAME)
+            .then((service) => {
+                service.updateMessage(msg);
             });
     }
 
