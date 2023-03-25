@@ -31,7 +31,7 @@ pub struct RequestBody {
     pub context_type: String,
 
     #[serde(rename = "rootPath")]
-    pub root_path: Option<String>,
+    pub root_path: String,
 }
 
 impl RequestBody {
@@ -46,7 +46,7 @@ impl RequestBody {
             bot_messages,
             user_messages,
             context_type: "copilot".to_owned(),
-            root_path,
+            root_path: root_path.unwrap_or_default(),
         }
     }
 
