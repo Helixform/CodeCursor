@@ -2,10 +2,7 @@ use serde::Serialize;
 
 use crate::GenerateInput;
 
-use super::{
-    bot_message::BotMessage, code_area::CodeArea, split_code_into_blocks,
-    user_message::UserMessage, UserRequest,
-};
+use super::{bot_message::BotMessage, user_message::UserMessage, UserRequest};
 
 #[derive(Debug, Clone, Copy, Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -51,23 +48,11 @@ impl RequestBody {
     }
 
     pub fn new_with_input(input: &GenerateInput, message_type: MessageType) -> Self {
-        let file_path = input.file_path();
-        let file_dir = input.file_dir();
-        let area = CodeArea::new_with_input(input);
-        let prompt = input.prompt();
-
-        let user_request = UserRequest::new(
-            prompt,
-            file_dir,
-            file_path.to_owned(),
-            input.document_text(),
-            split_code_into_blocks(&area.preceding_code),
-            split_code_into_blocks(&area.following_code),
-            area.selection_text,
-            message_type,
-        );
-
-        let workspace_directory = input.workspace_directory();
-        Self::new(user_request, vec![], vec![], workspace_directory)
+        Self::new(
+            UserRequest::new_with_input(input, message_type),
+            vec![],
+            vec![],
+            input.workspace_directory(),
+        )
     }
 }

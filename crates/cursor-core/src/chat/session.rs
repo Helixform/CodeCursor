@@ -3,7 +3,7 @@ use node_bridge::{bindings::uuid, prelude::*};
 use wasm_bindgen::JsValue;
 
 use crate::{
-    models::{user_message::UserMessage, BotMessage, MessageType, RequestBody},
+    models::{user_message::UserMessage, BotMessage, MessageType, RequestBody, UserRequest},
     request::make_request,
     GenerateInput,
 };
@@ -16,9 +16,17 @@ pub struct Session {
 
 impl Session {
     fn body_with_input(&mut self, input: &GenerateInput) -> &RequestBody {
-        if self.request_body.is_none() {
-            self.request_body = Some(RequestBody::new_with_input(input, MessageType::Freeform));
-        }
+        let message_type = MessageType::Freeform;
+
+        self.request_body = Some(
+            self.request_body
+                .take()
+                .map(|mut r| {
+                    r.user_request = UserRequest::new_with_input(input, message_type);
+                    r
+                })
+                .unwrap_or_else(|| RequestBody::new_with_input(input, message_type)),
+        );
         self.request_body.as_ref().unwrap()
     }
 
@@ -28,7 +36,10 @@ impl Session {
             MessageType::Markdown,
             message,
             "<|END_message|>".to_owned(),
-            "".to_owned(),
+            self.request_body
+                .as_ref()
+                .map(|r| r.user_request.current_root_path.clone())
+                .unwrap_or_default(),
             true,
         );
         self.request_body
@@ -73,6 +84,7 @@ impl Session {
 
         result_stream.end();
 
+        self.push_user_message(input);
         self.push_bot_message(message);
 
         Ok(())

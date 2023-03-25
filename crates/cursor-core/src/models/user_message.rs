@@ -42,7 +42,7 @@ pub struct UserMessage {
     #[serde(rename = "currentSelection")]
     pub current_selection: Option<String>,
 
-    #[serde(rename = "messageType")]
+    #[serde(rename = "msgType")]
     pub message_type: MessageType,
 
     #[serde(rename = "selection")]
