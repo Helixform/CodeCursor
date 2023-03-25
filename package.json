@@ -38,8 +38,9 @@
         "commands": [
             {
                 "command": "aicursor.generateCode",
-                "title": "CodeCursor: Generate Code",
-                "when": "editorFocus"
+                "title": "Generate Code",
+                "when": "editorFocus",
+                "category": "CodeCursor"
             }
         ],
         "viewsContainers": {
@@ -59,7 +60,25 @@
                     "name": "Chat"
                 }
             ]
-        }
+        },
+        "menus": {
+            "editor/context": [
+                {
+                    "submenu": "aicursor.submenu"
+                }
+            ],
+            "aicursor.submenu": [
+                {
+                    "command": "aicursor.generateCode"
+                }
+            ]
+        },
+        "submenus": [
+            {
+                "id": "aicursor.submenu",
+                "label": "CodeCursor"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run package",
