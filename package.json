@@ -1,8 +1,8 @@
 {
     "name": "aicursor",
-    "displayName": "CodeCursor",
+    "displayName": "CodeCursor (Cursor for VS Code)",
     "description": "Cursor integration for Visual Studio Code",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "publisher": "ktiays",
     "repository": {
         "type": "git",
@@ -38,7 +38,7 @@
         "commands": [
             {
                 "command": "aicursor.generateCode",
-                "title": "Code Cursor: Generate Code",
+                "title": "CodeCursor: Generate Code",
                 "when": "editorFocus"
             }
         ]

@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import { diff_match_patch } from 'diff-match-patch';
+import { diff_match_patch } from "diff-match-patch";
 
 import { Scratchpad } from "./scratchpad";
 import { generateCode, SelectionRange } from "./core";
-import { getOpenedTab } from '../utils';
+import { getOpenedTab } from "../utils";
 
 export class GenerateSession {
     #prompt: string;
@@ -141,7 +141,7 @@ export class GenerateSession {
             const statusBarItem = vscode.window.createStatusBarItem(
                 vscode.StatusBarAlignment.Left
             );
-            statusBarItem.text = "$(check) Code Cursor";
+            statusBarItem.text = "$(check) CodeCursor";
             statusBarItem.tooltip = "View Code Generation Result";
             statusBarItem.color = new vscode.ThemeColor("button.foreground");
             statusBarItem.command = "aicursor.showLastResult";
@@ -169,7 +169,7 @@ export class GenerateSession {
             const statusBarItem = vscode.window.createStatusBarItem(
                 vscode.StatusBarAlignment.Left
             );
-            statusBarItem.text = "$(error) Code Cursor";
+            statusBarItem.text = "$(error) CodeCursor";
             statusBarItem.tooltip = "Retry";
             statusBarItem.backgroundColor = new vscode.ThemeColor(
                 "statusBarItem.errorBackground"
@@ -213,21 +213,33 @@ export class GenerateSession {
         const patchedOriginalContents =
             originalContents.substring(0, selectionRange.offset) +
             scratchpad.contents +
-            originalContents.substring(selectionRange.offset + selectionRange.length);
+            originalContents.substring(
+                selectionRange.offset + selectionRange.length
+            );
 
         const dmp = new diff_match_patch();
-        const diff = dmp.diff_main(originalContents, patchedOriginalContents, true);
-        const patch = dmp.patch_make(originalContents, patchedOriginalContents, diff);
+        const diff = dmp.diff_main(
+            originalContents,
+            patchedOriginalContents,
+            true
+        );
+        const patch = dmp.patch_make(
+            originalContents,
+            patchedOriginalContents,
+            diff
+        );
 
-        const currentContents = document.getText() || '';
+        const currentContents = document.getText() || "";
         const patchApplyResults = dmp.patch_apply(patch, currentContents);
 
         // Check whether we can apply the changes.
-        const hasPatchFailures = patchApplyResults[1].filter(ok => !ok).length;
+        const hasPatchFailures = patchApplyResults[1].filter(
+            (ok) => !ok
+        ).length;
         if (hasPatchFailures) {
             vscode.window.showWarningMessage(
                 "The document has changed, cannot apply the changes automatically now. You " +
-                "can still copy the generated contents back manually."
+                    "can still copy the generated contents back manually."
             );
             return;
         }
@@ -240,14 +252,17 @@ export class GenerateSession {
             .edit((editBuilder) => {
                 const rangeStart = document.positionAt(0);
                 const rangeEnd = document.positionAt(currentContents.length);
-                editBuilder.replace(new vscode.Range(rangeStart, rangeEnd), finalContents);
+                editBuilder.replace(
+                    new vscode.Range(rangeStart, rangeEnd),
+                    finalContents
+                );
             })
             .then((success) => {
                 if (!success) {
                     // Concurrent modifications did happen, just let user try again.
                     vscode.window.showWarningMessage(
                         "Failed to apply the changes, maybe there are concurrent " +
-                        "modifications. You can try again later."
+                            "modifications. You can try again later."
                     );
                     return;
                 }
