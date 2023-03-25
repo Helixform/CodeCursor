@@ -1,18 +1,25 @@
 import * as vscode from "vscode";
 
 import { getNonce } from "../utils";
-import { sharedChatServiceImpl } from "./chatServiceImpl";
+import {
+    sharedChatServiceImpl,
+    ChatServiceClient,
+    ChatMessage,
+} from "./chatServiceImpl";
 import { ExtensionHostServiceManager } from "../../common/ipc/extensionHost";
 import {
     IChatViewService,
     CHAT_VIEW_SERVICE_NAME,
 } from "../../common/chatService";
 
-export class ChatPanelProvider implements vscode.WebviewViewProvider {
+export class ChatPanelProvider
+    implements vscode.WebviewViewProvider, ChatServiceClient
+{
     static readonly viewType = "chat";
 
     #view: vscode.WebviewView | null = null;
     #extensionContext: vscode.ExtensionContext;
+    #serviceManager: ExtensionHostServiceManager | null = null;
 
     constructor(extensionContext: vscode.ExtensionContext) {
         this.#extensionContext = extensionContext;
@@ -37,8 +44,12 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
             baseUri
         );
 
+        const chatService = sharedChatServiceImpl();
+        chatService.attachClient(this);
+
         const serviceManager = new ExtensionHostServiceManager(webview);
-        serviceManager.registerService(sharedChatServiceImpl());
+        serviceManager.registerService(chatService);
+        this.#serviceManager = serviceManager;
 
         const eventDisposable = vscode.window.onDidChangeTextEditorSelection(
             async (e) => {
@@ -54,7 +65,21 @@ export class ChatPanelProvider implements vscode.WebviewViewProvider {
         webviewView.onDidDispose(() => {
             eventDisposable.dispose();
             serviceManager.dispose();
+            chatService.detachClient(this);
         });
+    }
+
+    handleMessageChange(msg: ChatMessage): void {
+        const serviceManager = this.#serviceManager;
+        if (!serviceManager) {
+            return;
+        }
+
+        serviceManager
+            .getService<IChatViewService>(CHAT_VIEW_SERVICE_NAME)
+            .then((service) => {
+                service.updateMessage(msg.id, msg.contents);
+            });
     }
 
     static #buildWebviewContents(

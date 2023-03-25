@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
 
 import "./style.css";
@@ -8,28 +8,33 @@ import { ChatViewServiceImpl } from "./chatViewServiceImpl";
 import { getServiceManager } from "../../common/ipc/webview";
 import { IChatService, CHAT_SERVICE_NAME } from "../../common/chatService";
 
+function messagesWithUpdatedBotMessage(
+    msgs: MessageItemModel[],
+    updatedMsgId: number,
+    contents: string
+): MessageItemModel[] {
+    return msgs.map((msg) => {
+        if ("bot" + updatedMsgId === msg.id) {
+            return { id: msg.id, contents, isReply: msg.isReply };
+        }
+        return msg;
+    });
+}
+
 export function ChatPage() {
     const [messages, setMessages] = useState([] as MessageItemModel[]);
     const [hasSelection, setHasSelection] = useState(false);
     const [prompt, setPrompt] = useState("");
-    useEffect(() => {
-        setMessages(
-            Array.from({ length: 20 }).map((_, index) => {
-                const isReply = index % 2 !== 0;
-                return {
-                    id: "" + index,
-                    contents: isReply
-                        ? "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)."
-                        : "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-                    isReply: index % 2 !== 0,
-                };
-            })
-        );
 
-        const viewServiceImpl = new ChatViewServiceImpl();
-        viewServiceImpl.setHasSelectionAction = setHasSelection;
-        getServiceManager().registerService(viewServiceImpl);
-    }, []);
+    // Dependent on `setMessages`, which will never change.
+    const updateMessageAction = useCallback(
+        (msgId: number, contents: string) => {
+            setMessages((prev) => {
+                return messagesWithUpdatedBotMessage(prev, msgId, contents);
+            });
+        },
+        []
+    );
 
     const handleAskAction = useCallback(async () => {
         const chatService = await getServiceManager().getService<IChatService>(
@@ -39,16 +44,23 @@ export function ChatPage() {
         setMessages((prev) => {
             return [
                 ...prev,
-                { id: "" + (prev.length + 1), contents: prompt },
+                { id: "user" + (prev.length + 1), contents: prompt },
                 {
-                    id: "" + (prev.length + 2),
-                    contents: `fake reply ${msgId}`,
+                    id: "bot" + msgId,
+                    contents: "",
                     isReply: true,
                 },
             ];
         });
         setPrompt("");
     }, [prompt, setPrompt, setMessages]);
+
+    useEffect(() => {
+        const viewServiceImpl = new ChatViewServiceImpl();
+        viewServiceImpl.setHasSelectionAction = setHasSelection;
+        viewServiceImpl.updateMessageAction = updateMessageAction;
+        getServiceManager().registerService(viewServiceImpl);
+    }, []);
 
     return (
         <div className="chat-root">
