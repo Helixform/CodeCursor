@@ -81,6 +81,8 @@ export class Scratchpad implements ResultStream<string> {
     originalContents: string;
     contents: string;
     ended: boolean;
+    #lastUpdateTime: number = 0;
+    #deferredUpdateScheduled = false;
 
     constructor(originalContents: string) {
         this.id = scratchpadManager.addScratchpad(this);
@@ -109,7 +111,7 @@ export class Scratchpad implements ResultStream<string> {
 
     write(text: string) {
         this.contents += text;
-        this.#notifyChanges();
+        this.#notifyChanges(true);
     }
 
     end(): void {
@@ -117,7 +119,29 @@ export class Scratchpad implements ResultStream<string> {
         this.#notifyChanges();
     }
 
-    #notifyChanges() {
+    #notifyChanges(throttle?: boolean) {
+        const now = Date.now();
+        if (throttle) {
+            const elapseSinceLastUpdate = now - this.#lastUpdateTime;
+            // TODO: add a setting item for the throttle time.
+            if (elapseSinceLastUpdate < 500) {
+                this.#scheduleDeferredUpdate(500 - elapseSinceLastUpdate);
+                return;
+            }
+        }
+
         scratchpadManager.notifyDocumentChange(this.id);
+        this.#lastUpdateTime = now;
+    }
+
+    #scheduleDeferredUpdate(delayMs: number) {
+        if (this.#deferredUpdateScheduled) {
+            return;
+        }
+        this.#deferredUpdateScheduled = true;
+        setTimeout(() => {
+            this.#deferredUpdateScheduled = false;
+            this.#notifyChanges();
+        }, delayMs);
     }
 }
