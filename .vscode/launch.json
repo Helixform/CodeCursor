@@ -18,6 +18,17 @@
 			"preLaunchTask": "${defaultBuildTask}"
 		},
 		{
+			"name": "Run Extension (Without Building)",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--extensionDevelopmentPath=${workspaceFolder}"
+			],
+			"outFiles": [
+				"${workspaceFolder}/dist/**/*.js"
+			],
+		},
+		{
 			"name": "Run Extension (Without Rust)",
 			"type": "extensionHost",
 			"request": "launch",
