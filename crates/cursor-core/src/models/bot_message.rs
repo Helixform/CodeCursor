@@ -7,8 +7,8 @@ pub struct BotMessage {
     #[serde(rename = "sender")]
     pub sender: String,
 
-    #[serde(rename = "sendAt")]
-    pub send_at: i64,
+    #[serde(rename = "sentAt")]
+    pub sent_at: i64,
 
     #[serde(rename = "conversationId")]
     pub conversation_id: String,
@@ -52,7 +52,7 @@ impl BotMessage {
     ) -> Self {
         Self {
             sender: "bot".to_owned(),
-            send_at: chrono::Utc::now().timestamp_millis(),
+            sent_at: chrono::Utc::now().timestamp_millis(),
             conversation_id,
             message_type,
             message,
