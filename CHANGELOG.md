@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.2.2
+
+### Fix
+
+-   Unify the display name
+-   Frequent failures may occur when dealing with long code
+-   Throttle the diff operation for performance
+
 ## 0.2.1
 
 ### Add
