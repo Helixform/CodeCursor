@@ -3,12 +3,13 @@ import * as vscode from "vscode";
 import { IChatService, CHAT_SERVICE_NAME } from "../../common/chatService";
 import { MessageItemModel } from "../../common/chatService/model";
 import { SelectionRange } from "../generate/core";
-import { chat } from "./core";
+import { chat, resetChat } from "./core";
 
 export interface ChatServiceClient {
     handleReadyStateChange?: (isReady: boolean) => void;
     handleNewMessage?: (msg: MessageItemModel) => void;
     handleMessageChange?: (msg: MessageItemModel) => void;
+    handleClearMessage?: () => void;
 }
 
 export class ChatServiceImpl implements IChatService {
@@ -17,6 +18,7 @@ export class ChatServiceImpl implements IChatService {
     #messageIndex = new Map<string, MessageItemModel>();
     #clients = new Set<ChatServiceClient>();
     #currentAbortController: AbortController | null = null;
+    #clearSessionScheduled = false;
 
     get name(): string {
         return CHAT_SERVICE_NAME;
@@ -34,6 +36,25 @@ export class ChatServiceImpl implements IChatService {
             this.#currentAbortController?.abort();
             this.#currentAbortController = null;
         }
+    }
+
+    clearSession() {
+        const abortController = this.#currentAbortController;
+        if (abortController) {
+            this.#clearSessionScheduled = true;
+            abortController.abort();
+            return;
+        }
+
+        resetChat();
+        this.#messageIndex.clear();
+        this.#messages.splice(0, this.#messages.length);
+        for (const client of this.#clients) {
+            client.handleClearMessage?.call(client);
+        }
+        this.#clearSessionScheduled = false;
+
+        vscode.window.showInformationMessage("Chat session has been reset!");
     }
 
     #updateReadyState(isReady: boolean) {
@@ -137,6 +158,9 @@ export class ChatServiceImpl implements IChatService {
                 } finally {
                     this.#currentAbortController = null;
                     this.#updateReadyState(true);
+                    if (this.#clearSessionScheduled) {
+                        this.clearSession();
+                    }
                 }
             }
         );

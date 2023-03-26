@@ -2,7 +2,10 @@ import * as vscode from "vscode";
 
 import { ResultStream } from "../generate/resultStream";
 import { SelectionRange } from "../generate/core";
-import { chat as rustChat } from "@crates/cursor-core";
+import {
+    chat as rustChat,
+    resetChat as rustResetChat,
+} from "@crates/cursor-core";
 
 let isProcessing = false;
 
@@ -36,4 +39,12 @@ export async function chat(
     } finally {
         isProcessing = false;
     }
+}
+
+export function resetChat() {
+    if (isProcessing) {
+        throw new Error("Cannot reset the chat session while it's in-flight");
+    }
+
+    rustResetChat();
 }

@@ -9,6 +9,7 @@ export class ChatViewServiceImpl implements IChatViewService {
     setHasSelectionAction: ((hasSelection: boolean) => void) | null = null;
     addMessageAction: ((msg: MessageItemModel) => void) | null = null;
     updateMessageAction: ((msg: MessageItemModel) => void) | null = null;
+    clearMessageAction: (() => void) | null = null;
 
     get name(): string {
         return CHAT_VIEW_SERVICE_NAME;
@@ -28,5 +29,9 @@ export class ChatViewServiceImpl implements IChatViewService {
 
     async updateMessage(msg: MessageItemModel): Promise<void> {
         this.updateMessageAction?.call(null, msg);
+    }
+
+    async clearMessage(): Promise<void> {
+        this.clearMessageAction?.call(null);
     }
 }
