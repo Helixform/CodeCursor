@@ -112,6 +112,9 @@ export class ChatPanelProvider
         const scriptUri = webview.asWebviewUri(
             vscode.Uri.joinPath(baseUri, "webview.js")
         );
+        const codiconsUri = webview.asWebviewUri(
+            vscode.Uri.joinPath(baseUri, "codicon.css")
+        );
         const nonce = getNonce();
 
         return `
@@ -120,11 +123,12 @@ export class ChatPanelProvider
             <head>
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ; script-src 'nonce-${nonce}';">
+                <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline' ; script-src 'nonce-${nonce}';">
                 <title>CodeCursor</title>
                 <script nonce="${nonce}">
                     window.__codeCursorPageName = "chat";
                 </script>
+                <link href="${codiconsUri}" rel="stylesheet" />
             </head>
             <body>
                 <div id="root"></div>
