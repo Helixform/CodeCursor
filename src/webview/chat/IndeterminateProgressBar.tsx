@@ -1,7 +1,7 @@
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
-function useAnimationFrame(callback: (time: number) => void, deps: any[]) {
+function useAnimationFrame(callback: (time: number) => void, deps?: any[]) {
     const requestRef = useRef<number>();
     const previousTimeRef = useRef<number>();
 
@@ -21,41 +21,35 @@ function useAnimationFrame(callback: (time: number) => void, deps: any[]) {
 }
 
 function cubicBezier(t: number) {
-    return 3 * (1 - t) ** 2 * t * 0.1 + 3 * (1 - t) * t ** 2 * 0.9 + t ** 3;
+    return 3 * (1 - t) * t ** 2 * 0.7 + t ** 3;
 }
 
 export function IndeterminateProgressBar() {
-    const indicator = useRef<HTMLDivElement>(null);
+    const indicatorRef = useRef<HTMLDivElement>(null);
 
-    const durationRef = useRef<number>(0);
-    const [fastMode, setFastMode] = useState(false);
+    const shortLength = 20;
+    const longLength = 50;
+    const lengthRatio = 100 + shortLength + longLength;
 
-    const lengthRatio = (fastMode ? 0.5 : 0.2) * 100;
-    const slowDuration = 1.5 * 1e3;
-    const fastDuration = 0.8 * 1e3;
+    const duration = 2.1 * 1e3;
+    const elapsedRef = useRef(0);
 
-    useAnimationFrame(
-        (deltaTime) => {
-            if (!indicator.current) {
-                return;
-            }
+    useAnimationFrame((deltaTime) => {
+        if (!indicatorRef.current) {
+            return;
+        }
 
-            const progress =
-                durationRef.current / (fastMode ? fastDuration : slowDuration);
+        const progress = cubicBezier(elapsedRef.current / duration);
 
-            const newLeft =
-                (100 + lengthRatio) * cubicBezier(progress) - lengthRatio;
-            if (progress > 1) {
-                indicator.current.style.left = `-${lengthRatio}%`;
-                setFastMode(!fastMode);
-                durationRef.current = 0;
-            } else {
-                indicator.current.style.left = `${newLeft}%`;
-                durationRef.current += deltaTime;
-            }
-        },
-        [fastMode, setFastMode]
-    );
+        const newLeft = (100 + lengthRatio) * progress - lengthRatio;
+        if (progress > 1) {
+            indicatorRef.current.style.left = `-${lengthRatio}%`;
+            elapsedRef.current = 0;
+        } else {
+            indicatorRef.current.style.left = `${newLeft}%`;
+            elapsedRef.current += deltaTime;
+        }
+    });
 
     return (
         <div
@@ -67,16 +61,33 @@ export function IndeterminateProgressBar() {
             }}
         >
             <div
-                ref={indicator}
+                ref={indicatorRef}
                 style={{
                     position: "absolute",
                     width: `${lengthRatio}%`,
                     height: "100%",
-                    background: "var(--vscode-progressBar-background)",
                     top: 0,
                     left: `-${lengthRatio}%`,
                 }}
-            ></div>
+            >
+                <div
+                    style={{
+                        position: "absolute",
+                        background: "var(--vscode-progressBar-background)",
+                        width: `${(longLength / lengthRatio) * 100}%`,
+                        height: "100%",
+                    }}
+                />
+                <div
+                    style={{
+                        position: "absolute",
+                        background: "var(--vscode-progressBar-background)",
+                        width: `${(shortLength / lengthRatio) * 100}%`,
+                        height: "100%",
+                        right: 0,
+                    }}
+                />
+            </div>
         </div>
     );
 }
