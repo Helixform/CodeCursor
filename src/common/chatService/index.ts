@@ -16,4 +16,5 @@ export interface IChatViewService extends IService {
     setHasSelection(hasSelection: boolean): Promise<void>;
     addMessage(msg: MessageItemModel): Promise<void>;
     updateMessage(msg: MessageItemModel): Promise<void>;
+    clearMessage(): Promise<void>;
 }

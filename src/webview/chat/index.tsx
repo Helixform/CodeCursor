@@ -38,6 +38,9 @@ export function ChatPage() {
             return messagesWithUpdatedBotMessage(prev, msg);
         });
     }, []);
+    const clearMessageAction = useCallback(() => {
+        setMessages([]);
+    }, []);
 
     const handleAskAction = useCallback(async () => {
         const chatService = await getServiceManager().getService<IChatService>(
@@ -55,6 +58,7 @@ export function ChatPage() {
         viewServiceImpl.setHasSelectionAction = setHasSelection;
         viewServiceImpl.addMessageAction = addMessageAction;
         viewServiceImpl.updateMessageAction = updateMessageAction;
+        viewServiceImpl.clearMessageAction = clearMessageAction;
         serviceManager.registerService(viewServiceImpl);
 
         serviceManager

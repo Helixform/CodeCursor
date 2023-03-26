@@ -105,6 +105,19 @@ export class ChatPanelProvider
             });
     }
 
+    handleClearMessage(): void {
+        const serviceManager = this.#serviceManager;
+        if (!serviceManager) {
+            return;
+        }
+
+        serviceManager
+            .getService<IChatViewService>(CHAT_VIEW_SERVICE_NAME)
+            .then((service) => {
+                service.clearMessage();
+            });
+    }
+
     static #buildWebviewContents(
         webview: vscode.Webview,
         baseUri: vscode.Uri
