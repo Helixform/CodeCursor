@@ -101,8 +101,13 @@ pub async fn make_request(
     .add_header("content-type", "application/json")
     .add_header("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/0.1.6 Chrome/108.0.5359.62 Electron/22.0.0 Safari/537.36");
 
-    Ok(ResponseState::new(
-        request.send().await?,
-        expect_begin_message,
-    ))
+    let response = request.send().await?;
+    if response.status_code() != 200 {
+        return Err(js_sys::Error::new(&format!(
+            "Server returned status code {}",
+            response.status_code()
+        ))
+        .into());
+    }
+    Ok(ResponseState::new(response, expect_begin_message))
 }
