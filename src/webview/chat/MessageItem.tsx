@@ -10,11 +10,15 @@ export interface MessageItemProps {
 
 export function MessageItem(props: MessageItemProps) {
     const { model } = props;
-    const { contents, isReply } = model;
+    const { contents, isReply, isFinished } = model;
     return (
         <div className={`chat-msg ${isReply ? "reply" : ""}`}>
             <div className="chat-msg-contents">
-                <MessageTextView contents={contents} />
+                <MessageTextView
+                    contents={
+                        contents + (isReply && !isFinished ? "\u{258A}" : "")
+                    }
+                />
             </div>
         </div>
     );
