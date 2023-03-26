@@ -152,6 +152,18 @@ export class ChatServiceImpl implements IChatService {
         const isReady = this.#currentAbortController === null;
         this.#updateReadyState(isReady);
     }
+
+    async insertCodeSnippet(contents: string): Promise<void> {
+        const activeEditor = vscode.window.activeTextEditor;
+        if (!activeEditor) {
+            return;
+        }
+
+        await activeEditor.insertSnippet(
+            new vscode.SnippetString(contents),
+            activeEditor.selection
+        );
+    }
 }
 
 let shared: ChatServiceImpl | null = null;

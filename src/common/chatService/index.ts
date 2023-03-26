@@ -6,6 +6,7 @@ export const CHAT_SERVICE_NAME = "chat";
 export interface IChatService extends IService {
     confirmPrompt(prompt: string): Promise<void>;
     syncState(): Promise<void>;
+    insertCodeSnippet(contents: string): Promise<void>;
 }
 
 export const CHAT_VIEW_SERVICE_NAME = "chat_view";

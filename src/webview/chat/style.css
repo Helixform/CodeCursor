@@ -7,6 +7,7 @@
 
 .chat-list {
     flex: 1;
+    overflow-x: hidden;
     overflow-y: overlay;
 }
 
@@ -19,39 +20,100 @@
 }
 
 .chat-msg {
+    display: flow-root;
     position: relative;
-    padding: 10px 0;
+}
+
+.chat-msg.reply {
+    background-color: var(--vscode-editor-background);
 }
 
 .chat-list > .chat-msg:not(:last-child) {
     border-bottom: 1px solid var(--vscode-notebook-cellToolbarSeparator);
 }
 
-.chat-msg-reply-bg {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--vscode-foreground);
-    opacity: 0.06;
-    pointer-events: none;
-}
-
 .chat-msg-contents {
-    display: flex;
     padding: 0 16px;
     user-select: text;
     -webkit-user-select: text;
     -webkit-user-drag: auto;
 }
 
-.chat-msg-contents::selection {
+.chat-msg-contents *::selection {
     background-color: var(--vscode-editor-selectionBackground);
     color: var(--vscode-editor-selectionForeground);
 }
 
-.chat-msg-contents.align-end {
+.chat-msg:not(.reply) .chat-msg-contents {
+    display: flex;
     justify-content: end;
     padding-right: 24px;
+}
+
+.chat-msg-contents ol, .chat-msg-contents ul {
+    padding-left: 1.5em;
+}
+
+.chat-msg-contents pre {
+    margin: 0 -16px;
+    padding: 0px 16px;
+    padding-bottom: 16px;
+    overflow-x: overlay;
+}
+
+.chat-msg-contents code {
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size);
+    color: var(--vscode-editor-foreground);
+}
+
+.chat-msg-contents code .keyword {
+    color: var(--vscode-symbolIcon-keywordForeground);
+}
+
+.chat-msg-contents code .variable {
+    color: var(--vscode-symbolIcon-variableForeground);
+}
+
+.chat-msg-contents code .string {
+    color: var(--vscode-symbolIcon-stringForeground);
+}
+
+.chat-msg-contents code .function {
+    color: var(--vscode-symbolIcon-functionForeground);
+}
+
+.chat-msg-contents code .operator {
+    color: var(--vscode-symbolIcon-operatorForeground);
+}
+
+.chat-msg-contents code .number {
+    color: var(--vscode-symbolIcon-numberForeground);
+}
+
+.chat-msg-contents code .maybe-class-name {
+    color: var(--vscode-symbolIcon-classForeground);
+}
+
+.chat-msg-contents code .method {
+    color: var(--vscode-symbolIcon-methodForeground);
+}
+
+.chat-msg-contents code .import {
+    color: var(--vscode-editor-foreground);
+}
+
+.chat-msg-block-toolbar {
+    display: inline-flex;
+    width: auto;
+    margin-bottom: 6px;
+    column-gap: 4px;
+    padding: 4px;
+    border-radius: 8px;
+    background: var(--vscode-activityBar-background);
+}
+
+.chat-msg-block-toolbar vscode-button > span {
+    color: var(--vscode-activityBar-foreground);
+    opacity: 0.6;
 }
