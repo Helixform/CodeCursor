@@ -66,6 +66,19 @@ export class ChatPanelProvider
         });
     }
 
+    handleReadyStateChange(isReady: boolean): void {
+        const serviceManager = this.#serviceManager;
+        if (!serviceManager) {
+            return;
+        }
+
+        serviceManager
+            .getService<IChatViewService>(CHAT_VIEW_SERVICE_NAME)
+            .then((service) => {
+                service.setIsBusy(isReady);
+            });
+    }
+
     handleNewMessage(msg: MessageItemModel): void {
         const serviceManager = this.#serviceManager;
         if (!serviceManager) {

@@ -6,13 +6,15 @@ import { SelectionRange } from "../generate/core";
 import { chat } from "./core";
 
 export interface ChatServiceClient {
+    handleReadyStateChange?: (isReady: boolean) => void;
     handleNewMessage?: (msg: MessageItemModel) => void;
     handleMessageChange?: (msg: MessageItemModel) => void;
 }
 
 export class ChatServiceImpl implements IChatService {
     #currentMessageId = 0;
-    #messages = new Map<string, MessageItemModel>();
+    #messages = new Array<MessageItemModel>();
+    #messageIndex = new Map<string, MessageItemModel>();
     #clients = new Set<ChatServiceClient>();
     #currentAbortController: AbortController | null = null;
 
@@ -34,10 +36,17 @@ export class ChatServiceImpl implements IChatService {
         }
     }
 
+    #updateReadyState(isReady: boolean) {
+        for (const client of this.#clients) {
+            client.handleReadyStateChange?.call(client, isReady);
+        }
+    }
+
     #addMessage(msg: MessageItemModel): string {
         const id = ++this.#currentMessageId;
         msg.id = msg.isReply ? `bot:${id}` : `user:${id}`;
-        this.#messages.set(msg.id, msg);
+        this.#messages.push(msg);
+        this.#messageIndex.set(msg.id, msg);
 
         for (const client of this.#clients) {
             client.handleNewMessage?.call(client, msg);
@@ -47,7 +56,7 @@ export class ChatServiceImpl implements IChatService {
     }
 
     #updateMessage(msgId: string, newContents: string, finished?: boolean) {
-        const msg = this.#messages.get(msgId);
+        const msg = this.#messageIndex.get(msgId);
         if (!msg) {
             return;
         }
@@ -61,6 +70,12 @@ export class ChatServiceImpl implements IChatService {
     }
 
     async confirmPrompt(prompt: string): Promise<void> {
+        if (this.#currentAbortController) {
+            // TODO: optimize the UX.
+            console.warn("A chat session is in-flight");
+            return;
+        }
+
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             throw new Error("No active editor");
@@ -107,6 +122,7 @@ export class ChatServiceImpl implements IChatService {
                     abortController.abort();
                 });
                 this.#currentAbortController = abortController;
+                this.#updateReadyState(false);
 
                 try {
                     await chat(
@@ -120,9 +136,21 @@ export class ChatServiceImpl implements IChatService {
                     console.error(e);
                 } finally {
                     this.#currentAbortController = null;
+                    this.#updateReadyState(true);
                 }
             }
         );
+    }
+
+    async syncState(): Promise<void> {
+        for (const msg of this.#messages) {
+            for (const client of this.#clients) {
+                client.handleNewMessage?.call(client, msg);
+            }
+        }
+
+        const isReady = this.#currentAbortController === null;
+        this.#updateReadyState(isReady);
     }
 }
 
