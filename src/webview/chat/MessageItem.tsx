@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 
 import { MessageItemModel } from "../../common/chatService/model";
 import { MessageCodeBlock } from "./MessageCodeBlock";
+import { IndeterminateProgressBar } from "./IndeterminateProgressBar";
 
 export interface MessageItemProps {
     model: MessageItemModel;
@@ -20,6 +21,7 @@ export function MessageItem(props: MessageItemProps) {
                     }
                 />
             </div>
+            {isReply && !isFinished ? <IndeterminateProgressBar /> : null}
         </div>
     );
 }
