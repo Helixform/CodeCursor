@@ -24,6 +24,7 @@ function messagesWithUpdatedBotMessage(
 export function ChatPage() {
     const [messages, setMessages] = useState([] as MessageItemModel[]);
     const [hasSelection, setHasSelection] = useState(false);
+    const [isReady, setIsReady] = useState(false);
     const [prompt, setPrompt] = useState("");
 
     // Dependent on `setMessages`, which will never change.
@@ -47,11 +48,20 @@ export function ChatPage() {
     }, [prompt, setPrompt, setMessages]);
 
     useEffect(() => {
+        const serviceManager = getServiceManager();
+
         const viewServiceImpl = new ChatViewServiceImpl();
+        viewServiceImpl.setIsReadyAction = setIsReady;
         viewServiceImpl.setHasSelectionAction = setHasSelection;
         viewServiceImpl.addMessageAction = addMessageAction;
         viewServiceImpl.updateMessageAction = updateMessageAction;
-        getServiceManager().registerService(viewServiceImpl);
+        serviceManager.registerService(viewServiceImpl);
+
+        serviceManager
+            .getService<IChatService>(CHAT_SERVICE_NAME)
+            .then((chatService) => {
+                chatService.syncState();
+            });
     }, []);
 
     return (
@@ -68,13 +78,14 @@ export function ChatPage() {
                     placeholder={`Talk about the ${
                         hasSelection ? "selected contents" : "whole document"
                     }...`}
+                    disabled={!isReady}
                     value={prompt}
                     onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                         setPrompt(e.target.value);
                     }}
                 />
                 <VSCodeButton
-                    disabled={prompt.length === 0}
+                    disabled={!isReady || prompt.length === 0}
                     onClick={handleAskAction}
                 >
                     Ask
