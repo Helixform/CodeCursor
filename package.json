@@ -41,6 +41,12 @@
                 "title": "Generate Code",
                 "when": "editorFocus",
                 "category": "CodeCursor"
+            },
+            {
+                "command": "aicursor.resetChat",
+                "title": "Reset Chat",
+                "category": "CodeCursor",
+                "icon": "$(trash)"
             }
         ],
         "viewsContainers": {
@@ -70,6 +76,13 @@
             "aicursor.submenu": [
                 {
                     "command": "aicursor.generateCode"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "aicursor.resetChat",
+                    "when": "view == chat",
+                    "group": "navigation"
                 }
             ]
         },

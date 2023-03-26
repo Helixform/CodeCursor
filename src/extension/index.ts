@@ -43,7 +43,8 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.registerWebviewViewProvider(
             ChatPanelProvider.viewType,
             new ChatPanelProvider(context)
-        )
+        ),
+        vscode.commands.registerCommand("aicursor.resetChat", () => {})
     );
 }
 
