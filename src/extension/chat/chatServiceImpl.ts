@@ -155,6 +155,12 @@ export class ChatServiceImpl implements IChatService {
                     );
                 } catch (e) {
                     console.error(e);
+                    // TODO: optimize the display of error message.
+                    this.#updateMessage(
+                        replyMsgId,
+                        "\n(Response interrupted)",
+                        true
+                    );
                 } finally {
                     this.#currentAbortController = null;
                     this.#updateReadyState(true);
