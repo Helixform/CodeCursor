@@ -1,5 +1,11 @@
 import * as React from "react";
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+    useState,
+    useEffect,
+    useLayoutEffect,
+    useCallback,
+    useRef,
+} from "react";
 import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
 
 import "./style.css";
@@ -21,22 +27,30 @@ function messagesWithUpdatedBotMessage(
     });
 }
 
+const AUTO_SCROLL_FLAG_NONE = 0;
+const AUTO_SCROLL_FLAG_FORCED = 1;
+const AUTO_SCROLL_FLAG_AUTOMATIC = 2;
+
 export function ChatPage() {
     const [messages, setMessages] = useState([] as MessageItemModel[]);
     const [hasSelection, setHasSelection] = useState(false);
     const [isReady, setIsReady] = useState(false);
     const [prompt, setPrompt] = useState("");
+    const [autoScrollFlag, setAutoScrollFlag] = useState(AUTO_SCROLL_FLAG_NONE);
+    const chatListRef = useRef<HTMLDivElement>(null);
 
     // Dependent on `setMessages`, which will never change.
     const addMessageAction = useCallback((msg: MessageItemModel) => {
         setMessages((prev) => {
             return [...prev, msg];
         });
+        setAutoScrollFlag(AUTO_SCROLL_FLAG_FORCED);
     }, []);
     const updateMessageAction = useCallback((msg: MessageItemModel) => {
         setMessages((prev) => {
             return messagesWithUpdatedBotMessage(prev, msg);
         });
+        setAutoScrollFlag(AUTO_SCROLL_FLAG_AUTOMATIC);
     }, []);
     const clearMessageAction = useCallback(() => {
         setMessages([]);
@@ -49,6 +63,23 @@ export function ChatPage() {
         await chatService.confirmPrompt(prompt);
         setPrompt("");
     }, [prompt, setPrompt, setMessages]);
+
+    useLayoutEffect(() => {
+        if (!autoScrollFlag) {
+            return;
+        }
+        const chatListEl = chatListRef.current;
+        if (!chatListEl) {
+            return;
+        }
+
+        setAutoScrollFlag(AUTO_SCROLL_FLAG_NONE);
+
+        const targetScrollTop =
+            chatListEl.scrollHeight - chatListEl.clientHeight;
+        // TODO: implement `AUTO_SCROLL_FLAG_AUTOMATIC` flag.
+        chatListEl.scrollTop = targetScrollTop;
+    }, [messages, autoScrollFlag, setAutoScrollFlag, chatListRef]);
 
     useEffect(() => {
         const serviceManager = getServiceManager();
@@ -70,7 +101,7 @@ export function ChatPage() {
 
     return (
         <div className="chat-root">
-            <div className="chat-list">
+            <div ref={chatListRef} className="chat-list">
                 {messages.map((m) => {
                     return <MessageItem key={m.id} model={m} />;
                 })}
