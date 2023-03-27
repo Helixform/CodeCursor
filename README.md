@@ -2,17 +2,21 @@
 
 **Use Cursor right in the editor you love!**
 
-First of all, We would like to thank **Cursor Team** for their brilliant works. Please give their [app](https://www.cursor.so) a try!
+First of all, we would like to thank **Cursor Team** for their brilliant works. Please give their [app](https://www.cursor.so) a try!
 
 ## What's Cursor? And Why This Extension?
 
-Cursor is an AI code editor based on GPT-4. You can write, edit and chat about your code with it. At this time, Cursor is only provided as a dedicated app, and the team currently has no plans to develop extensions for other editors or IDEs.
+Cursor is an AI code editor based on OpenAI GPT models. You can write, edit and chat about your code with it. At this time, Cursor is only provided as a dedicated app, and the team currently has no plans to develop extensions for other editors or IDEs.
 
 We believe there are more developers actively use Visual Studio Code as their main tool for serious works. And this is why we built **CodeCursor**. It's not going to replace the Cursor app, but it provides another way to use Cursor.
 
 ## Getting Started
 
-You don't need to configure anything before starting using it. Just open a document and type `CodeCursor` in Command Palette. You will see the command below:
+You don't need to configure anything before starting using it.
+
+### Code Generation
+
+Just open a document and type `CodeCursor` in Command Palette. You will see the command below:
 
 ![Command Palette](./artworks/command-palette.png)
 
@@ -22,13 +26,17 @@ While code generation is in progress, the following status bar item will be disp
 
 ![Generating](./artworks/generating.png)
 
-Click on it to cancel the request.
+Click on it to cancel the request. Upon completion of code generation, the status bar item will change a "check mark". You can click it reopen the generated result at any time.
 
-Upon completion of code generation, the status bar item will change to:
+The generated contents will be live streamed, and shown as a text diff. You can simply apply the changes by clicking "Accept" button in the notification:
 
 ![Completed](./artworks/completed.png)
 
-Click on it to reopen the generated result at any time.
+### Chat
+
+You can chat with your code just like using ChatGPT. To open the chat panel, click "CodeCursor" icon on the Activity Bar. You can ask questions about the currently opened document or a selected piece of text.
+
+![Chat](./artworks/chat.png)
 
 ## Known Issues
 
