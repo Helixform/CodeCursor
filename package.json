@@ -2,7 +2,7 @@
     "name": "aicursor",
     "displayName": "CodeCursor (Cursor for VS Code)",
     "description": "Cursor integration for Visual Studio Code",
-    "version": "0.2.2",
+    "version": "0.3.0",
     "publisher": "ktiays",
     "repository": {
         "type": "git",

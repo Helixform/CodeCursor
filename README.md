@@ -40,8 +40,7 @@ You can chat with your code just like using ChatGPT. To open the chat panel, cli
 
 ## Known Issues
 
--   [ ] Code generation may be interrupted unexpectedly, this is still being investigated. Generally, a retry will fix it.
--   [x] When users modified the document before accepting a change, the replacing range is incorrect.
+Code generation may fail when Cursor server is at high capacity. Please wait patiently for the server to recover, or you can upgrade to Cursor Pro to use the reserved capacity (only supported in [Cursor app](https://www.cursor.so)).
 
 To track all issues / file a new issue please go to the Github repo.
 
