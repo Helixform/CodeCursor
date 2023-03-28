@@ -1,5 +1,16 @@
 # Change Log
 
+## 0.3.0
+
+### New Feature
+
+-   Chat is now available in the CodeCursor
+-   Add `Generate Code` command to the editor context menu
+
+### Fix
+
+-   Fixed issue where failed requests were incorrectly identified as completed
+
 ## 0.2.2
 
 ### Fix
