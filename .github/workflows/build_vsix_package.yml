@@ -25,15 +25,13 @@ jobs:
     - name: Use Rust
       uses: actions-rs/toolchain@v1.0.6
       with:
-        toolchain: nightly 
+        toolchain: stable
 
     - name: Prepare wasm-pack
       uses: jetli/wasm-pack-action@v0.4.0
 
     - name: NPM Install
-      run: npm install
+      run:  npm install
 
     - name: Build
-      uses: lannonbr/vsce-action@3.0.0
-      with:
-        args: "package"
+      run:  npm i -g vsce && vsce package
