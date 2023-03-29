@@ -24,6 +24,8 @@ jobs:
 
     - name: Use Rust
       uses: actions-rs/toolchain@v1.0.6
+      with:
+        toolchain: nightly 
 
     - name: Prepare wasm-pack
       uses: jetli/wasm-pack-action@v0.4.0
