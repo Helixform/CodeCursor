@@ -5,6 +5,14 @@ import { getGlobalState } from "./globalState";
 import { ChatPanelProvider } from "./chat/chatPanelProvider";
 import { sharedChatServiceImpl } from "./chat/chatServiceImpl";
 
+function setHasActiveGenerateSessionContext(value: boolean) {
+    vscode.commands.executeCommand(
+        "setContext",
+        "aicursor.hasActiveGenerateSession",
+        value
+    );
+}
+
 async function handleGenerateCodeCommand() {
     const input = await vscode.window.showInputBox({
         placeHolder: "Instructions for code to generate...",
@@ -27,9 +35,14 @@ async function handleGenerateCodeCommand() {
     }
 
     const session = new GenerateSession(input, editor);
+    session.onDidDispose(() => {
+        globalState.activeSession = null;
+        setHasActiveGenerateSessionContext(false);
+    });
     session.start();
     session.showResult();
     globalState.activeSession = session;
+    setHasActiveGenerateSessionContext(true);
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -39,6 +52,14 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         vscode.commands.registerCommand("aicursor.showLastResult", () => {
             getGlobalState().activeSession?.showResult();
+        }),
+        vscode.commands.registerCommand("aicursor.acceptChanges", () => {
+            getGlobalState().activeSession?.applyChanges();
+        }),
+        vscode.commands.registerCommand("aicursor.rejectChanges", () => {
+            const globalState = getGlobalState();
+            globalState.activeSession?.dispose();
+            globalState.activeSession = null;
         }),
         vscode.commands.registerCommand("aicursor.resetChat", () => {
             sharedChatServiceImpl().clearSession();

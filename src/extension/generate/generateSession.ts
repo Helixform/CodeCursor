@@ -13,6 +13,7 @@ export class GenerateSession {
     #scratchpad: Scratchpad | null;
     #errorOccurred = false;
     #statusBarItem: vscode.StatusBarItem | null = null;
+    #disposeEvent = new vscode.EventEmitter<void>();
 
     constructor(prompt: string, editor: vscode.TextEditor) {
         const { document, selection } = editor;
@@ -33,6 +34,10 @@ export class GenerateSession {
         this.#scratchpad = new Scratchpad(selectionText);
     }
 
+    get onDidDispose(): vscode.Event<void> {
+        return this.#disposeEvent.event;
+    }
+
     dispose() {
         this.hideResult();
 
@@ -41,6 +46,9 @@ export class GenerateSession {
 
         this.#statusBarItem?.dispose();
         this.#statusBarItem = null;
+
+        this.#disposeEvent.fire();
+        this.#disposeEvent.dispose();
     }
 
     start() {
@@ -113,6 +121,12 @@ export class GenerateSession {
         }
 
         vscode.window.tabGroups.close(openedResultTab);
+    }
+
+    applyChanges() {
+        if (this.#scratchpad?.ended) {
+            this.#applyChanges();
+        }
     }
 
     #retry() {

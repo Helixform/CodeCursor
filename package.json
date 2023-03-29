@@ -39,7 +39,25 @@
             {
                 "command": "aicursor.generateCode",
                 "title": "Generate Code",
-                "when": "editorFocus",
+                "enablement": "editorFocus",
+                "category": "CodeCursor"
+            },
+            {
+                "command": "aicursor.showLastResult",
+                "title": "Show Generated Code",
+                "enablement": "aicursor.hasActiveGenerateSession",
+                "category": "CodeCursor"
+            },
+            {
+                "command": "aicursor.acceptChanges",
+                "title": "Accept Changes",
+                "enablement": "editorFocus && aicursor.hasActiveGenerateSession",
+                "category": "CodeCursor"
+            },
+            {
+                "command": "aicursor.rejectChanges",
+                "title": "Reject Changes",
+                "enablement": "editorFocus && aicursor.hasActiveGenerateSession",
                 "category": "CodeCursor"
             },
             {
