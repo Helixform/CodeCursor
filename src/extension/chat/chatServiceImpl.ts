@@ -190,7 +190,7 @@ export class ChatServiceImpl implements IChatService {
         }
 
         await activeEditor.insertSnippet(
-            new vscode.SnippetString(contents),
+            new vscode.SnippetString().appendText(contents),
             activeEditor.selection
         );
     }
