@@ -1,8 +1,19 @@
 # Change Log
 
+## 0.3.1
+
+### Add
+
+-   Commands for commonly used actions (such as "Accept Changes"), which allow users to bind keyboard shortcuts
+
+### Fix
+
+-   Fixed the issue where text wrapped in the placeholder pattern would be lost when inserting code snippet
+-   Show alert when chatting without an active text editor
+
 ## 0.3.0
 
-### New Feature
+### New Features
 
 -   Chat is now available in the CodeCursor
 -   Add `Generate Code` command to the editor context menu
