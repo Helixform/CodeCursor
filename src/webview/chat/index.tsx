@@ -5,6 +5,7 @@ import {
     useLayoutEffect,
     useCallback,
     useRef,
+    useMemo,
 } from "react";
 import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
 
@@ -25,6 +26,38 @@ function messagesWithUpdatedBotMessage(
         }
         return msg;
     });
+}
+
+type UseConfirmShortcut = {
+    label: string;
+    keyDownHandler: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+};
+function useConfirmShortcut(handler: () => void): UseConfirmShortcut {
+    const isMac = useMemo(() => {
+        const userAgentData = (window.navigator as any).userAgentData;
+        if (userAgentData) {
+            return userAgentData.platform === "macOS";
+        }
+        return window.navigator.platform === "MacIntel";
+    }, []);
+
+    return {
+        label: isMac ? "⌘⏎" : "Ctrl+Enter",
+        keyDownHandler: useCallback(
+            (e) => {
+                if (e.key !== "Enter") {
+                    return;
+                }
+                const expected = isMac ? e.metaKey : e.ctrlKey;
+                const unexpected = isMac ? e.ctrlKey : e.metaKey;
+                if (!expected || e.altKey || e.shiftKey || unexpected) {
+                    return;
+                }
+                handler();
+            },
+            [isMac, handler]
+        ),
+    };
 }
 
 const AUTO_SCROLL_FLAG_NONE = 0;
@@ -63,6 +96,8 @@ export function ChatPage() {
         await chatService.confirmPrompt(prompt);
         setPrompt("");
     }, [prompt, setPrompt, setMessages]);
+
+    const confirmShortcut = useConfirmShortcut(handleAskAction);
 
     useLayoutEffect(() => {
         if (!autoScrollFlag) {
@@ -118,12 +153,13 @@ export function ChatPage() {
                     onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
                         setPrompt(e.target.value);
                     }}
+                    onKeyDown={confirmShortcut.keyDownHandler}
                 />
                 <VSCodeButton
                     disabled={!isReady || prompt.length === 0}
                     onClick={handleAskAction}
                 >
-                    Ask
+                    {`Ask (${confirmShortcut.label})`}
                 </VSCodeButton>
             </div>
         </div>
