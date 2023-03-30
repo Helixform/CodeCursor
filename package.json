@@ -39,7 +39,7 @@
             {
                 "command": "aicursor.generateCode",
                 "title": "Generate Code",
-                "enablement": "editorFocus",
+                "enablement": "activeEditor == workbench.editors.textResourceEditor",
                 "category": "CodeCursor"
             },
             {
@@ -51,18 +51,19 @@
             {
                 "command": "aicursor.acceptChanges",
                 "title": "Accept Changes",
-                "enablement": "editorFocus && aicursor.hasActiveGenerateSession",
+                "enablement": "activeEditor == workbench.editors.textResourceEditor && aicursor.hasActiveGenerateSession",
                 "category": "CodeCursor"
             },
             {
                 "command": "aicursor.rejectChanges",
                 "title": "Reject Changes",
-                "enablement": "editorFocus && aicursor.hasActiveGenerateSession",
+                "enablement": "activeEditor == workbench.editors.textResourceEditor && aicursor.hasActiveGenerateSession",
                 "category": "CodeCursor"
             },
             {
                 "command": "aicursor.resetChat",
                 "title": "Reset Chat",
+                "enablement": "activeViewlet == workbench.view.extension.aicursor",
                 "category": "CodeCursor",
                 "icon": "$(trash)"
             }
