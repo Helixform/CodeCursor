@@ -32,6 +32,8 @@ interface IGenerateInput {
     get selectionRange(): ISelectionRange;
     get resultStream(): IResultStream;
     get abortSignal(): AbortSignal;
+    get apiKey(): string | null;
+    get gptModel(): string | null;
 }
 "#;
 
@@ -90,6 +92,12 @@ extern "C" {
 
     #[wasm_bindgen(method, getter, structural, js_name = abortSignal)]
     pub fn abort_signal(this: &GenerateInput) -> AbortSignal;
+
+    #[wasm_bindgen(method, getter, structural, js_name = apiKey)]
+    pub fn api_key(this: &GenerateInput) -> Option<String>;
+
+    #[wasm_bindgen(method, getter, structural, js_name = gptModel)]
+    pub fn gpt_model(this: &GenerateInput) -> Option<String>;
 }
 
 impl GenerateInput {
