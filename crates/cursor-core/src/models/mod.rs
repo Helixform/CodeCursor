@@ -6,7 +6,6 @@ pub(crate) mod user_request;
 
 pub(crate) use bot_message::*;
 pub(crate) use request_body::*;
-pub(crate) use user_message::*;
 pub(crate) use user_request::*;
 
 fn random() -> i32 {

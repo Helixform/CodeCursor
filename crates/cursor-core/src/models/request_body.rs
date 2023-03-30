@@ -29,6 +29,12 @@ pub struct RequestBody {
 
     #[serde(rename = "rootPath")]
     pub root_path: String,
+
+    #[serde(rename = "apiKey", skip_serializing_if = "Option::is_none")]
+    pub api_key: Option<String>,
+
+    #[serde(rename = "customModel", skip_serializing_if = "Option::is_none")]
+    pub gpt_model: Option<String>,
 }
 
 impl RequestBody {
@@ -37,6 +43,8 @@ impl RequestBody {
         user_messages: Vec<UserMessage>,
         bot_messages: Vec<BotMessage>,
         root_path: Option<String>,
+        api_key: Option<String>,
+        gpt_model: Option<String>,
     ) -> Self {
         Self {
             user_request,
@@ -44,6 +52,8 @@ impl RequestBody {
             user_messages,
             context_type: "copilot".to_owned(),
             root_path: root_path.unwrap_or_default(),
+            api_key,
+            gpt_model,
         }
     }
 
@@ -53,6 +63,8 @@ impl RequestBody {
             vec![],
             vec![],
             input.workspace_directory(),
+            input.api_key(),
+            input.gpt_model(),
         )
     }
 }
