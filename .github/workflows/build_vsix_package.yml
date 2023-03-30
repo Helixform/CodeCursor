@@ -3,8 +3,6 @@ name: Build VSIX Package
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
 
 jobs:
   build:
@@ -35,3 +33,8 @@ jobs:
 
     - name: Build
       run:  npm i -g vsce && vsce package
+    
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        path: ${{ github.workspace }}/*.vsix
