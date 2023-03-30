@@ -39,7 +39,7 @@
             {
                 "command": "aicursor.generateCode",
                 "title": "Generate Code",
-                "enablement": "activeEditor == workbench.editors.textResourceEditor",
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./",
                 "category": "CodeCursor"
             },
             {
@@ -51,13 +51,13 @@
             {
                 "command": "aicursor.acceptChanges",
                 "title": "Accept Changes",
-                "enablement": "activeEditor == workbench.editors.textResourceEditor && aicursor.hasActiveGenerateSession",
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./ && aicursor.hasActiveGenerateSession",
                 "category": "CodeCursor"
             },
             {
                 "command": "aicursor.rejectChanges",
                 "title": "Reject Changes",
-                "enablement": "activeEditor == workbench.editors.textResourceEditor && aicursor.hasActiveGenerateSession",
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./ && aicursor.hasActiveGenerateSession",
                 "category": "CodeCursor"
             },
             {
