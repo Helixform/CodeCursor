@@ -110,7 +110,27 @@
                 "id": "aicursor.submenu",
                 "label": "CodeCursor"
             }
-        ]
+        ],
+        "configuration": {
+            "title": "CodeCursor",
+            "properties": {
+                "aicursor.openaiApiKey": {
+                    "type": "string",
+                    "default": "",
+                    "description": "OpenAI API key for using Cursor with your own quota."
+                },
+                "aicursor.model": {
+                    "type": "string",
+                    "default": "gpt-3.5-turbo",
+                    "enum": ["gpt-3.5-turbo", "gpt-4"],
+                    "enumDescriptions": [
+                        "Use GPT 3.5 Turbo model for code generation and chat",
+                        "Use GPT 4 model for code generation and chat (requires access invitation)"
+                    ],
+                    "markdownDescription": "Model to use for code generation and chat. Only applies when `#aicursor.openaiApiKey#` is set."
+                }
+            }
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run package",
