@@ -1,5 +1,15 @@
 # Change Log
 
+## 0.3.2
+
+### Add
+
+-   Supports for custom OpenAI API key and models
+
+### Fix
+
+-   Fixed a regression issue where commands will disappear during search
+
 ## 0.3.1
 
 ### Add

@@ -38,6 +38,13 @@ You can chat with your code just like using ChatGPT. To open the chat panel, cli
 
 ![Chat](./artworks/chat.png)
 
+## Custom API Keys
+
+Cursor server may become unstable when it's under heavy traffic. You can provide your own OpenAI API keys to have a smoother user experience. You can also choose the model you want to use when a key is set. For details, please refer to the extension configuration.
+
+> **Note:**  
+> Your API key will be sent to Cursor server.
+
 ## Known Issues
 
 Code generation may fail when Cursor server is at high capacity. Please wait patiently for the server to recover, or you can upgrade to Cursor Pro to use the reserved capacity (only supported in [Cursor app](https://www.cursor.so)).
