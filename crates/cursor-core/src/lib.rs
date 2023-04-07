@@ -1,3 +1,4 @@
+mod auth;
 mod chat;
 mod generate;
 mod models;
