@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as crypto from "crypto";
 
 import { GenerateSession, getScratchpadManager } from "./generate";
 import { getGlobalState } from "./globalState";
@@ -46,6 +47,12 @@ async function handleGenerateCodeCommand() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+    global.crypto = {
+        getRandomValues: (arr: Uint8Array) => {
+            crypto.randomFillSync(arr);
+        },
+    } as any;
+
     context.subscriptions.push(
         vscode.commands.registerCommand("aicursor.generateCode", () => {
             handleGenerateCodeCommand();
