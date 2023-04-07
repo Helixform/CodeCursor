@@ -1,8 +1,8 @@
 use serde::Serialize;
 
-use crate::{models::code_area::CodeArea, GenerateInput};
+use crate::GenerateInput;
 
-use super::MessageType;
+use super::{code_area::CodeArea, MessageType};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Selection {

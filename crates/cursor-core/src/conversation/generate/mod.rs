@@ -1,13 +1,20 @@
 use std::future::IntoFuture;
 
-use crate::{models::*, request::make_request, GenerateInput};
 use futures::{
     future::{select, Either},
     StreamExt,
 };
 use node_bridge::futures::Defer;
 use node_bridge::prelude::*;
+use uuid::Uuid;
 use wasm_bindgen::prelude::*;
+
+use crate::GenerateInput;
+
+use super::{
+    make_conversation_request,
+    models::{BotMessage, MessageType, RequestBody},
+};
 
 async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
     let file_path = input.file_path();
@@ -34,7 +41,7 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
         #[cfg(debug_assertions)]
         console::log_str(&serde_json::to_string(&request_body).unwrap());
 
-        let mut state = make_request(
+        let mut state = make_conversation_request(
             if interrupted {
                 "/continue/"
             } else {
@@ -78,7 +85,7 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
 
         // Generate an UUID as conversation ID.
         if conversation_id.is_none() {
-            conversation_id = Some(node_bridge::bindings::uuid::uuid_v4());
+            conversation_id = Some(Uuid::new_v4().to_string());
         }
         let bot_message = BotMessage::new(
             conversation_id.clone().unwrap(),

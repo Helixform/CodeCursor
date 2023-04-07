@@ -1,6 +1,6 @@
 use serde::Serialize;
 
-use super::{random, request_body::MessageType};
+use super::{request_body::MessageType, random};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct BotMessage {

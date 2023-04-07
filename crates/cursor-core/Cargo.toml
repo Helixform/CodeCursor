@@ -19,3 +19,4 @@ js-sys = "0.3"
 sha256 = "1"
 rand = "0.8"
 getrandom = { version = "0.2", features = ["js"] }
+uuid = { version = "1", features = ["v4", "wasm-bindgen"] }

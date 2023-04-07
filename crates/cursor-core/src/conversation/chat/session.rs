@@ -1,10 +1,13 @@
 use futures::StreamExt;
-use node_bridge::{bindings::uuid, prelude::*};
+use node_bridge::prelude::*;
+use uuid::Uuid;
 use wasm_bindgen::JsValue;
 
 use crate::{
-    models::{user_message::UserMessage, BotMessage, MessageType, RequestBody, UserRequest},
-    request::make_request,
+    conversation::{
+        make_conversation_request,
+        models::{user_message::UserMessage, BotMessage, MessageType, RequestBody, UserRequest},
+    },
     GenerateInput,
 };
 
@@ -60,13 +63,13 @@ impl Session {
     pub fn new() -> Self {
         Self {
             request_body: None,
-            conversation_id: uuid::uuid_v4(),
+            conversation_id: Uuid::new_v4().to_string(),
         }
     }
 
     pub async fn send_message(&mut self, input: &GenerateInput) -> Result<(), JsValue> {
         let request_body = self.body_with_input(input);
-        let mut state = make_request("/conversation", request_body, true).await?;
+        let mut state = make_conversation_request("/conversation", request_body, true).await?;
 
         let mut message: String = "".to_owned();
 

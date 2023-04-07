@@ -1,7 +1,5 @@
 mod auth;
-mod chat;
-mod generate;
-mod models;
+mod conversation;
 mod request;
 
 use node_bridge::bindings::AbortSignal;

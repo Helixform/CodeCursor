@@ -1,15 +1,16 @@
-pub(crate) mod bot_message;
+mod bot_message;
 mod code_area;
-pub(crate) mod request_body;
-pub(crate) mod user_message;
-pub(crate) mod user_request;
+pub(super) mod request_body;
+pub(super) mod user_message;
+pub(super) mod user_request;
 
-pub(crate) use bot_message::*;
-pub(crate) use request_body::*;
-pub(crate) use user_request::*;
+pub(super) use bot_message::*;
+use rand::Rng;
+pub(super) use request_body::*;
+pub(super) use user_request::*;
 
 fn random() -> i32 {
-    js_sys::Math::floor(js_sys::Math::random() * 1000.0) as i32
+    rand::thread_rng().gen_range(0..=1000)
 }
 
 // Split the code into chunks of 20 line blocks.
