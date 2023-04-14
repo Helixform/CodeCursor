@@ -11,7 +11,7 @@ use node_bridge::{
 };
 use wasm_bindgen::JsValue;
 
-use crate::request::make_request;
+use crate::request::{make_request, JsonSendable};
 
 use self::models::RequestBody;
 
@@ -96,7 +96,10 @@ async fn make_conversation_request(
     body: &RequestBody,
     expect_begin_message: bool,
 ) -> Result<ResponseState, JsValue> {
-    let response = make_request(path, body, HttpMethod::Post).await?;
+    let response = make_request(path, HttpMethod::Post)
+        .set_json_body(&body)
+        .send()
+        .await?;
     if response.status_code() != 200 {
         return Err(js_sys::Error::new(&format!(
             "Server returned status code {}",
