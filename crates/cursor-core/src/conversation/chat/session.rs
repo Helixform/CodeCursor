@@ -69,7 +69,7 @@ impl Session {
 
     pub async fn send_message(&mut self, input: &GenerateInput) -> Result<(), JsValue> {
         let request_body = self.body_with_input(input);
-        let mut state = make_conversation_request("/conversation", request_body, true).await?;
+        let mut state = make_conversation_request("/conversation", request_body).await?;
 
         let mut message: String = "".to_owned();
 

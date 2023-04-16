@@ -5,8 +5,7 @@ import { GenerateSession, getScratchpadManager } from "./generate";
 import { getGlobalState } from "./globalState";
 import { ChatPanelProvider } from "./chat/chatPanelProvider";
 import { sharedChatServiceImpl } from "./chat/chatServiceImpl";
-import { handleSignInCommand } from "./auth/core";
-import { setExtensionContext } from "@crates/cursor-core";
+import { setExtensionContext, signIn, signOut } from "@crates/cursor-core";
 import { ExtensionContext } from "./context";
 
 function setHasActiveGenerateSessionContext(value: boolean) {
@@ -78,9 +77,11 @@ export function activate(context: vscode.ExtensionContext) {
             sharedChatServiceImpl().clearSession();
         }),
         vscode.commands.registerCommand("aicursor.signIn", () => {
-            handleSignInCommand();
+            signIn();
         }),
-        vscode.commands.registerCommand("aicursor.signOut", () => {}),
+        vscode.commands.registerCommand("aicursor.signOut", () => {
+            signOut();
+        }),
         getScratchpadManager().registerTextDocumentContentProvider(),
         vscode.window.registerWebviewViewProvider(
             ChatPanelProvider.viewType,

@@ -1,4 +1,3 @@
-// pub mod session;
 pub mod token;
 
 use std::future::IntoFuture;
@@ -16,10 +15,13 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
 
+const AUTH_TOKEN_KEY: &str = "auth_token";
+
 use crate::{
     bindings::{progress_location::ProgressLocation, progress_options::ProgressOptions},
     context::get_extension_context,
     request::make_request,
+    storage::GlobalStorage,
 };
 
 use self::token::Token;
@@ -53,6 +55,14 @@ where
 
 #[wasm_bindgen(js_name = signIn)]
 pub async fn sign_in() {
+    let context = get_extension_context();
+    let storage = context.storage();
+    if storage.get(AUTH_TOKEN_KEY).is_some() {
+        // If there is already an authentication token, it means that the user has logged in
+        // and does not need to log in again.
+        return;
+    }
+
     let uuid = Uuid::new_v4().to_string();
     let verifier = base64_encode(random_bytes());
     let challenge = base64_encode(sha256(verifier.clone()));
@@ -62,7 +72,6 @@ pub async fn sign_in() {
         uuid.clone()
     );
 
-    let context = get_extension_context();
     // The API of VSCode does not allow us to obtain the execution result of the 'vscode.open' command,
     // so we cannot determine whether the user has confirmed to open url.
     context
@@ -73,16 +82,18 @@ pub async fn sign_in() {
         .with_progress(
             ProgressOptions {
                 location: ProgressLocation::Notification,
-                title: Some("Signing in...".to_owned()),
+                title: Some("Signing In/Up...".to_owned()),
                 cancellable: true,
             },
             closure!(|abort_signal: AbortSignal| {
                 let uuid = uuid.clone();
                 let verifier = verifier.clone();
+                let storage: GlobalStorage = storage.clone().into();
                 future_to_promise(async move {
-                    polling(&uuid, &verifier, abort_signal)
-                        .await
-                        .map(Into::into)
+                    if let Some(token) = polling(&uuid, &verifier, abort_signal).await? {
+                        storage.update(AUTH_TOKEN_KEY, Some(&token));
+                    }
+                    Ok(JsValue::null())
                 })
             })
             .into_js_value()
@@ -151,13 +162,47 @@ async fn polling(
     }
 }
 
-pub fn sign_out() {}
+#[wasm_bindgen(js_name = signOut)]
+pub fn sign_out() {
+    get_extension_context()
+        .storage()
+        .update(AUTH_TOKEN_KEY, None);
+}
+
+pub fn account_token() -> Option<Token> {
+    get_extension_context()
+        .storage()
+        .get(AUTH_TOKEN_KEY)
+        .and_then(|token| serde_json::from_str(&token).ok())
+}
 
 #[cfg(test)]
 mod test {
+    use super::*;
+
     #[test]
     fn test_random_bytes() {
         let bytes = super::random_bytes();
         assert_eq!(bytes.len(), 32);
+    }
+
+    #[test]
+    fn test_base64_encode() {
+        let bytes = vec![
+            0xa9, 0x1e, 0x74, 0x36, 0x4a, 0x57, 0xb6, 0x40, 0xcf, 0x25, 0x37, 0xf7, 0x20, 0x26,
+            0x7a, 0x2e, 0x94, 0x90, 0x03, 0x85, 0x5b, 0xb8, 0xd0, 0x92, 0x37, 0xdc, 0xb3, 0xd9,
+            0x0a, 0x4d, 0xd4, 0xc5,
+        ];
+        let encoded = base64_encode(bytes);
+        assert_eq!(encoded, "qR50NkpXtkDPJTf3ICZ6LpSQA4VbuNCSN9yz2QpN1MU");
+    }
+
+    #[test]
+    fn test_sha256() {
+        let v = "qR50NkpXtkDPJTf3ICZ6LpSQA4VbuNCSN9yz2QpN1MU";
+        assert_eq!(
+            base64_encode(sha256(v)),
+            "ddiNacYgAjUZTDf6Pza1wRlSjuWIQRz5Z1Jc2Bj4DII"
+        );
     }
 }
