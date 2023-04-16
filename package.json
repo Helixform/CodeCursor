@@ -66,6 +66,16 @@
                 "enablement": "activeViewlet == workbench.view.extension.aicursor",
                 "category": "CodeCursor",
                 "icon": "$(trash)"
+            },
+            {
+                "command": "aicursor.signIn",
+                "title": "Sign In/Up",
+                "category": "CodeCursor"
+            },
+            {
+                "command": "aicursor.signOut",
+                "title": "Sign Out",
+                "category": "CodeCursor"
             }
         ],
         "viewsContainers": {

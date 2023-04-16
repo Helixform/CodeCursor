@@ -11,7 +11,7 @@ macro_rules! closure {
     ($create_fn:ident @ $($arg:ident : $arg_type:ty),* { $($body:tt)* }) => {
         wasm_bindgen::closure::Closure::$create_fn(move |$($arg : $arg_type),*| {
             $($body)*
-        }) as wasm_bindgen::closure::Closure<dyn FnMut($($arg_type),*)>
+        }) as wasm_bindgen::closure::Closure<dyn FnMut($($arg_type),*) -> _>
     };
 }
 
