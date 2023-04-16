@@ -70,7 +70,7 @@ async fn make_conversation_request(
                 let context = get_extension_context();
                 match context
                     .show_information_message(
-                        "You have to sign in / sign up or configure API key to use Cursor AI feature",
+                        "You have to sign in / sign up or configure API key to use Cursor AI features",
                         vec![SIGN_IN_ITEM, CONFIGURE_API_KEY_ITEM]
                             .into_iter()
                             .map(JsValue::from)

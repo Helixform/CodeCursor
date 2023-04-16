@@ -49,6 +49,7 @@ async function handleGenerateCodeCommand() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
+    // To use crypto features in WebAssembly, we need to add this polyfill.
     global.crypto = {
         getRandomValues: (arr: Uint8Array) => {
             crypto.randomFillSync(arr);

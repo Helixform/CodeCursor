@@ -19,7 +19,7 @@ const AUTH_TOKEN_KEY: &str = "auth_token";
 
 use crate::{
     bindings::{progress_location::ProgressLocation, progress_options::ProgressOptions},
-    context::{get_extension_context, ExtensionContext},
+    context::get_extension_context,
     request::make_request,
     storage::GlobalStorage,
 };
