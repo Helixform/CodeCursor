@@ -12,7 +12,7 @@ We believe there are more developers actively use Visual Studio Code as their ma
 
 ## Getting Started
 
-You don't need to configure anything before starting using it.
+You have to sign in the Cursor account or configure you own API keys to use this extension. Please refer to the [Custom API Keys](#custom-api-keys) section for details.
 
 ### Code Generation
 
@@ -47,7 +47,7 @@ Cursor server may become unstable when it's under heavy traffic. You can provide
 
 ## Known Issues
 
-Code generation may fail when Cursor server is at high capacity. Please wait patiently for the server to recover, or you can upgrade to Cursor Pro to use the reserved capacity (only supported in [Cursor app](https://www.cursor.so)).
+Due to limitations in the new version of the Cursor API, the automatic continuation ability for long code is currently unavailable.
 
 To track all issues / file a new issue please go to the Github repo.
 
