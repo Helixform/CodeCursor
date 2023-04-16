@@ -1,6 +1,9 @@
-mod auth;
+pub mod auth;
+mod bindings;
+pub mod context;
 mod conversation;
 mod request;
+pub mod storage;
 
 use node_bridge::bindings::AbortSignal;
 use wasm_bindgen::prelude::*;
