@@ -2,7 +2,7 @@
     "name": "aicursor",
     "displayName": "CodeCursor (Cursor for VS Code)",
     "description": "Cursor integration for Visual Studio Code",
-    "version": "0.3.3",
+    "version": "0.4.0",
     "publisher": "ktiays",
     "repository": {
         "type": "git",
@@ -80,7 +80,6 @@
             {
                 "command": "aicursor.configureApiKey",
                 "title": "Configure API Key",
-                "enablement": "aicursor.needAuth",
                 "category": "CodeCursor"
             }
         ],
