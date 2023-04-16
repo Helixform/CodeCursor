@@ -2,17 +2,17 @@ pub mod chat;
 pub mod generate;
 pub mod models;
 
-use std::cell::Cell;
-
 use futures::{stream, Stream, StreamExt};
 use node_bridge::{
     http_client::{HttpMethod, HttpResponse},
     prelude::console,
 };
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{JsError, JsValue};
+use wasm_bindgen_futures::spawn_local;
 
 use crate::{
     auth::account_token,
+    context::get_extension_context,
     request::{make_request, JsonSendable},
 };
 
@@ -53,6 +53,9 @@ impl ResponseState {
     }
 }
 
+const SIGN_IN_ITEM: &str = "Sign In / Sign Up";
+const CONFIGURE_API_KEY_ITEM: &str = "Configure API Key";
+
 async fn make_conversation_request(
     path: &str,
     body: &RequestBody,
@@ -63,7 +66,35 @@ async fn make_conversation_request(
             request =
                 request.add_header("Authorization", &format!("Bearer {}", token.access_token));
         } else {
-            todo!()
+            spawn_local(async move {
+                let context = get_extension_context();
+                match context
+                    .show_information_message(
+                        "You have to sign in / sign up or configure API key to use Cursor AI feature",
+                        vec![SIGN_IN_ITEM, CONFIGURE_API_KEY_ITEM]
+                            .into_iter()
+                            .map(JsValue::from)
+                            .collect(),
+                    )
+                    .await
+                    .as_string()
+                {
+                    Some(pick) => {
+                        context
+                            .execute_command0(&format!(
+                                "aicursor.{}",
+                                if pick == SIGN_IN_ITEM {
+                                    "signInUp"
+                                } else {
+                                    "configureApiKey"
+                                }
+                            ))
+                            .await;
+                    }
+                    None => {}
+                }
+            });
+            return Err(JsError::new("No API key or account token").into());
         }
     }
     let response = request.set_json_body(&body).send().await?;

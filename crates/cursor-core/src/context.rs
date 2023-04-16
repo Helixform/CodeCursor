@@ -9,6 +9,7 @@ interface IExtensionContext {
     get storage(): IGlobalStorage;
     executeCommand(command: string, ...args: any[]): Thenable<any>;
     withProgress(options: RustProgressOptions, callback: () => Thenable<any>): Thenable<any>;
+    showInformationMessage(message: string, items: string[]): Thenable<string | undefined>;
 }
 "#;
 
@@ -21,14 +22,32 @@ extern "C" {
     pub fn storage(this: &ExtensionContext) -> GlobalStorage;
 
     #[wasm_bindgen(method, structural, js_name = executeCommand)]
+    pub async fn execute_command0(this: &ExtensionContext, command: &str) -> JsValue;
+
+    #[wasm_bindgen(method, structural, js_name = executeCommand)]
     pub async fn execute_command1(this: &ExtensionContext, command: &str, args: JsValue)
         -> JsValue;
+
+    #[wasm_bindgen(method, structural, js_name = executeCommand)]
+    pub async fn execute_command2(
+        this: &ExtensionContext,
+        command: &str,
+        args1: JsValue,
+        args2: JsValue,
+    ) -> JsValue;
 
     #[wasm_bindgen(method, structural, js_name = withProgress)]
     pub async fn with_progress(
         this: &ExtensionContext,
         options: ProgressOptions,
         callback: js_sys::Function,
+    ) -> JsValue;
+
+    #[wasm_bindgen(method, structural, js_name = showInformationMessage)]
+    pub async fn show_information_message(
+        this: &ExtensionContext,
+        message: &str,
+        items: js_sys::Array,
     ) -> JsValue;
 }
 

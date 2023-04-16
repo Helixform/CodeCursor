@@ -13,13 +13,13 @@ use rand::RngCore;
 use sha2::Digest;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen_futures::future_to_promise;
+use wasm_bindgen_futures::{future_to_promise, spawn_local};
 
 const AUTH_TOKEN_KEY: &str = "auth_token";
 
 use crate::{
     bindings::{progress_location::ProgressLocation, progress_options::ProgressOptions},
-    context::get_extension_context,
+    context::{get_extension_context, ExtensionContext},
     request::make_request,
     storage::GlobalStorage,
 };
@@ -82,7 +82,7 @@ pub async fn sign_in() {
         .with_progress(
             ProgressOptions {
                 location: ProgressLocation::Notification,
-                title: Some("Signing In/Up...".to_owned()),
+                title: Some("Waiting for sign in / sign up...".to_owned()),
                 cancellable: true,
             },
             closure!(|abort_signal: AbortSignal| {
@@ -90,10 +90,22 @@ pub async fn sign_in() {
                 let verifier = verifier.clone();
                 let storage: GlobalStorage = storage.clone().into();
                 future_to_promise(async move {
-                    if let Some(token) = polling(&uuid, &verifier, abort_signal).await? {
-                        storage.update(AUTH_TOKEN_KEY, Some(&token));
-                    }
-                    Ok(JsValue::null())
+                    Ok(
+                        if let Some(token) = polling(&uuid, &verifier, abort_signal).await? {
+                            storage.update(AUTH_TOKEN_KEY, Some(&token));
+                            spawn_local(async move {
+                                get_extension_context()
+                                    .show_information_message(
+                                        "You have successfully logged in.",
+                                        js_sys::Array::new(),
+                                    )
+                                    .await;
+                            });
+                            JsValue::from_str(&token)
+                        } else {
+                            JsValue::null()
+                        },
+                    )
                 })
             })
             .into_js_value()
@@ -164,9 +176,13 @@ async fn polling(
 
 #[wasm_bindgen(js_name = signOut)]
 pub fn sign_out() {
-    get_extension_context()
-        .storage()
-        .update(AUTH_TOKEN_KEY, None);
+    let context = get_extension_context();
+    context.storage().update(AUTH_TOKEN_KEY, None);
+    spawn_local(async move {
+        context
+            .show_information_message("You have successfully logged out.", js_sys::Array::new())
+            .await;
+    });
 }
 
 pub fn account_token() -> Option<Token> {
