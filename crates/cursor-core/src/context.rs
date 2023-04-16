@@ -17,7 +17,7 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "IExtensionContext")]
     pub type ExtensionContext;
 
-    #[wasm_bindgen(method, structural)]
+    #[wasm_bindgen(method, structural, getter)]
     pub fn storage(this: &ExtensionContext) -> GlobalStorage;
 
     #[wasm_bindgen(method, structural, js_name = executeCommand)]
