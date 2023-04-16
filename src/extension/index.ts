@@ -76,11 +76,17 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("aicursor.resetChat", () => {
             sharedChatServiceImpl().clearSession();
         }),
-        vscode.commands.registerCommand("aicursor.signIn", () => {
+        vscode.commands.registerCommand("aicursor.signInUp", () => {
             signIn();
         }),
         vscode.commands.registerCommand("aicursor.signOut", () => {
             signOut();
+        }),
+        vscode.commands.registerCommand("aicursor.configureApiKey", () => {
+            vscode.commands.executeCommand(
+                "workbench.action.openSettings",
+                "aicursor.openaiApiKey"
+            );
         }),
         getScratchpadManager().registerTextDocumentContentProvider(),
         vscode.window.registerWebviewViewProvider(

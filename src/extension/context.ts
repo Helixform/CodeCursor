@@ -24,6 +24,10 @@ export class ExtensionContext implements IExtensionContext {
         return vscode.commands.executeCommand(command, ...args);
     }
 
+    executeCommand0(command: string): Thenable<any> {
+        return vscode.commands.executeCommand(command);
+    }
+
     withProgress(
         options: RustProgressOptions,
         callback: (signal: AbortSignal) => Thenable<any>
@@ -35,5 +39,12 @@ export class ExtensionContext implements IExtensionContext {
             });
             await callback(abortController.signal);
         });
+    }
+
+    showInformationMessage(
+        message: string,
+        items: string[]
+    ): Thenable<string | undefined> {
+        return vscode.window.showInformationMessage(message, ...items);
     }
 }

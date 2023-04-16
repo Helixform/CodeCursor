@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(typescript_custom_section)]
 const IGLOBAL_STORAGE: &'static str = r#"
 interface IGlobalStorage {
-    update(key: string, value: string | null): void;
+    update(key: string, value: string | undefined): void;
     get(key: string): string | null;
 }
 "#;

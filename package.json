@@ -68,13 +68,19 @@
                 "icon": "$(trash)"
             },
             {
-                "command": "aicursor.signIn",
-                "title": "Sign In/Up",
+                "command": "aicursor.signInUp",
+                "title": "Sign In / Sign Up",
                 "category": "CodeCursor"
             },
             {
                 "command": "aicursor.signOut",
                 "title": "Sign Out",
+                "category": "CodeCursor"
+            },
+            {
+                "command": "aicursor.configureApiKey",
+                "title": "Configure API Key",
+                "enablement": "aicursor.needAuth",
                 "category": "CodeCursor"
             }
         ],

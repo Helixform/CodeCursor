@@ -165,9 +165,6 @@ export class GenerateSession {
 
         const pick = await vscode.window.showInformationMessage(
             "Code generation is done.",
-            {
-                detail: "What do you want to do with the result?",
-            },
             "Accept",
             "Reject"
         );
