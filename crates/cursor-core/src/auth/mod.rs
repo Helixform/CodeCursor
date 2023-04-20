@@ -22,7 +22,7 @@ use crate::{
         progress::Progress, progress_location::ProgressLocation, progress_options::ProgressOptions,
     },
     context::get_extension_context,
-    request::make_request,
+    request::make_request_with_legacy,
 };
 
 use self::token::Token;
@@ -136,9 +136,10 @@ async fn polling(
             }
             _ => {}
         }
-        let mut response = make_request(
+        let mut response = make_request_with_legacy(
             &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
             HttpMethod::Get,
+            true,
         )
         .send()
         .await?;

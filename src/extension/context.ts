@@ -43,7 +43,11 @@ export class ExtensionContext implements IExtensionContext {
                     progress.report({ message });
                 },
             } as IProgress;
-            await callback(wrappedProgress, abortController.signal);
+            try {
+                await callback(wrappedProgress, abortController.signal);
+            } catch (e) {
+                console.error(e);
+            }
         });
     }
 
