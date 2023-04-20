@@ -1,3 +1,5 @@
+mod handler;
+
 use futures::StreamExt;
 use node_bridge::{bindings::AbortSignal, prelude::*};
 use serde_json::json;
@@ -11,6 +13,8 @@ use crate::{
     context::get_extension_context,
     request::stream::{make_stream_request, StreamResponseState},
 };
+
+use self::handler::ProjectHandler;
 
 const STEP_MESSAGE: &str = "cursor-step";
 const CREATE_MESSAGE: &str = "cursor-create";
@@ -35,7 +39,7 @@ impl Task {
 }
 
 #[wasm_bindgen(js_name = generateProject)]
-pub async fn generate_project(prompt: &str) -> Result<JsValue, JsValue> {
+pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<JsValue, JsValue> {
     let prompt = prompt.to_owned();
     Ok(get_extension_context()
         .with_progress(
@@ -53,6 +57,7 @@ pub async fn generate_project(prompt: &str) -> Result<JsValue, JsValue> {
                             .into();
                     let mut data_stream = state.data_stream();
                     let mut current_task = None;
+                    let mut file_writer = None;
                     while let Some(data) = data_stream.next().await {
                         #[cfg(debug_assertions)]
                         console::log_str(&data);
@@ -65,30 +70,39 @@ pub async fn generate_project(prompt: &str) -> Result<JsValue, JsValue> {
                             current_task = Some(Task::Step(task.to_owned()));
                         } else if data.starts_with(CREATE_MESSAGE) {
                             let task = data[CREATE_MESSAGE.len() + 1..].trim();
-                            current_task = Some(Task::Create(task.to_owned()));
+                            current_task = Some(Task::Create(format!("Creating {}", task)));
+
+                            // The title of the "create" message is a file path,
+                            // which requires creating a file based on the path.
+                            handler.create_file_recursive(task).await;
                         } else if data.starts_with(APPEND_MESSAGE) {
                             let task = data[APPEND_MESSAGE.len() + 1..].trim();
-                            current_task = Some(Task::Append(task.to_owned()));
+                            current_task =
+                                Some(Task::Append(format!("Appending contents to {}", task)));
+
+                            file_writer = handler.make_file_writer(task);
                         } else if data.starts_with(END_MESSAGE) {
                             current_task = None;
+                            file_writer.as_ref().map(|w| w.end());
+                            file_writer = None;
                         } else if data.starts_with(FINISHED_MESSAGE) {
+                            file_writer.as_ref().map(|w| w.end());
                             break;
+                        } else {
+                            match &current_task {
+                                Some(Task::Append(_)) => {
+                                    if let Some(writer) = file_writer.as_ref() {
+                                        writer.write(&data);
+                                    }
+                                }
+                                _ => {}
+                            }
                         }
 
                         // The message sent by the report will automatically disappear after a short period of time.
                         // In order to keep the text displayed on the dialog box, report the title every time data is returned.
                         if current_task.is_some() {
                             progress.report(current_task.as_ref().unwrap().title());
-                            continue;
-                        }
-                        match &current_task {
-                            Some(Task::Create(_)) => {
-                                todo!()
-                            }
-                            Some(Task::Append(_)) => {
-                                todo!()
-                            }
-                            _ => {}
                         }
                     }
                     drop(data_stream);

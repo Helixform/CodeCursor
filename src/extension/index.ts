@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import * as crypto from "crypto";
+import * as fs from "node:fs";
 
 import { GenerateSession, getScratchpadManager } from "./generate";
 import { getGlobalState } from "./globalState";

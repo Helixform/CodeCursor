@@ -84,6 +84,7 @@
             {
                 "command": "aicursor.generateProject",
                 "title": "Generate Project",
+                "enablement": "workspaceFolders != null && workspaceFolderCount > 0",
                 "category": "CodeCursor"
             }
         ],

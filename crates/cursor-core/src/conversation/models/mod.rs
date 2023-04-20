@@ -5,13 +5,8 @@ pub(super) mod user_message;
 pub(super) mod user_request;
 
 pub(super) use bot_message::*;
-use rand::Rng;
 pub(super) use request_body::*;
 pub(super) use user_request::*;
-
-fn random() -> i32 {
-    rand::thread_rng().gen_range(0..=1000)
-}
 
 // Split the code into chunks of 20 line blocks.
 pub fn split_code_into_blocks(code: &str) -> Vec<String> {
