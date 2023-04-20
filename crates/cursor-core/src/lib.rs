@@ -2,6 +2,7 @@ pub mod auth;
 mod bindings;
 pub mod context;
 mod conversation;
+mod project;
 mod request;
 pub mod storage;
 

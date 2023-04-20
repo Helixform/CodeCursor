@@ -18,10 +18,11 @@ use wasm_bindgen_futures::{future_to_promise, spawn_local};
 const AUTH_TOKEN_KEY: &str = "auth_token";
 
 use crate::{
-    bindings::{progress_location::ProgressLocation, progress_options::ProgressOptions},
+    bindings::{
+        progress::Progress, progress_location::ProgressLocation, progress_options::ProgressOptions,
+    },
     context::get_extension_context,
     request::make_request,
-    storage::GlobalStorage,
 };
 
 use self::token::Token;
@@ -85,10 +86,7 @@ pub async fn sign_in() {
                 title: Some("Waiting for sign in / sign up...".to_owned()),
                 cancellable: true,
             },
-            closure!(|abort_signal: AbortSignal| {
-                let uuid = uuid.clone();
-                let verifier = verifier.clone();
-                let storage: GlobalStorage = storage.clone().into();
+            closure_once!(|_progress: Progress, abort_signal: AbortSignal| {
                 future_to_promise(async move {
                     Ok(
                         if let Some(token) = polling(&uuid, &verifier, abort_signal).await? {

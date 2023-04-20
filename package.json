@@ -2,7 +2,7 @@
     "name": "aicursor",
     "displayName": "CodeCursor (Cursor for VS Code)",
     "description": "Cursor integration for Visual Studio Code",
-    "version": "0.4.1",
+    "version": "0.5.0",
     "publisher": "ktiays",
     "repository": {
         "type": "git",
@@ -79,6 +79,11 @@
             {
                 "command": "aicursor.configureApiKey",
                 "title": "Configure API Key",
+                "category": "CodeCursor"
+            },
+            {
+                "command": "aicursor.generateProject",
+                "title": "Generate Project",
                 "category": "CodeCursor"
             }
         ],

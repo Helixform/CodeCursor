@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import {
     IExtensionContext,
     IGlobalStorage,
+    IProgress,
     RustProgressOptions,
 } from "@crates/cursor-core";
 import { getGlobalState } from "./globalState";
@@ -30,14 +31,19 @@ export class ExtensionContext implements IExtensionContext {
 
     withProgress(
         options: RustProgressOptions,
-        callback: (signal: AbortSignal) => Thenable<any>
+        callback: (progress: IProgress, signal: AbortSignal) => Thenable<any>
     ): Thenable<any> {
-        return vscode.window.withProgress(options, async (_, token) => {
+        return vscode.window.withProgress(options, async (progress, token) => {
             const abortController = new AbortController();
             token.onCancellationRequested(() => {
                 abortController.abort();
             });
-            await callback(abortController.signal);
+            const wrappedProgress = {
+                report(message?: string) {
+                    progress.report({ message });
+                },
+            } as IProgress;
+            await callback(wrappedProgress, abortController.signal);
         });
     }
 
