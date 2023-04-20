@@ -1,7 +1,12 @@
 mod handler;
 
-use futures::StreamExt;
-use node_bridge::{bindings::AbortSignal, prelude::*};
+use std::future::IntoFuture;
+
+use futures::{
+    future::{select, Either},
+    StreamExt,
+};
+use node_bridge::{bindings::AbortSignal, futures::Defer, prelude::*};
 use serde_json::json;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -49,7 +54,17 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
                 cancellable: true,
             },
             closure_once!(|progress: Progress, abort_signal: AbortSignal| {
-                future_to_promise(async move {
+                let defer_abort = Defer::new();
+                let defer_abort_clone = defer_abort.clone();
+                abort_signal.add_event_listener(
+                    "abort",
+                    closure_once!(|| {
+                        defer_abort_clone.resolve(JsValue::null());
+                    })
+                    .into_js_value(),
+                );
+
+                let task = async move {
                     let mut state: StreamResponseState =
                         make_stream_request("/gen_project", &json!({ "description": prompt }))
                             .send()
@@ -107,6 +122,14 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
                     }
                     drop(data_stream);
                     state.complete().await.map(|_| JsValue::null())
+                };
+
+                future_to_promise(async move {
+                    let task = std::pin::pin!(task);
+                    match select(defer_abort.into_future(), task).await {
+                        Either::Left((_, _)) => Ok(JsValue::null()),
+                        Either::Right((result, _)) => result,
+                    }
                 })
             })
             .into_js_value()
