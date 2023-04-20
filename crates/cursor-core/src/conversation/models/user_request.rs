@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::GenerateInput;
 
-use super::{code_area::CodeArea, random, request_body::MessageType, split_code_into_blocks};
+use super::{code_area::CodeArea, request_body::MessageType, split_code_into_blocks};
 
 #[derive(Debug, Serialize, Clone)]
 pub struct UserRequest {
@@ -24,7 +24,7 @@ pub struct UserRequest {
     pub suffix_code: Vec<String>,
 
     #[serde(rename = "currentSelection")]
-    pub current_selection: Option<String>,
+    pub current_selection: String,
 
     #[serde(rename = "copilotCodeBlocks")]
     pub copilot_code_blocks: Vec<String>,
@@ -37,9 +37,6 @@ pub struct UserRequest {
 
     #[serde(rename = "msgType")]
     pub message_type: MessageType,
-
-    #[serde(rename = "maxOrigLine")]
-    pub max_original_line: i32,
 }
 
 impl UserRequest {
@@ -50,7 +47,7 @@ impl UserRequest {
         current_file_contents: String,
         preceding_code: Vec<String>,
         suffix_code: Vec<String>,
-        current_selection: Option<String>,
+        current_selection: String,
         message_type: MessageType,
     ) -> Self {
         Self {
@@ -65,7 +62,6 @@ impl UserRequest {
             custom_code_blocks: vec![],
             code_block_identifiers: vec![],
             message_type,
-            max_original_line: random(),
         }
     }
 
@@ -82,7 +78,7 @@ impl UserRequest {
             input.document_text(),
             split_code_into_blocks(&code_area.preceding_code),
             split_code_into_blocks(&code_area.following_code),
-            code_area.selection_text,
+            code_area.selection_text.unwrap_or_default(),
             message_type,
         )
     }

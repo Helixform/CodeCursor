@@ -1,4 +1,4 @@
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use crate::GenerateInput;
 
@@ -10,7 +10,6 @@ pub enum MessageType {
     Edit,
     Generate,
     Freeform,
-    Markdown,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -24,9 +23,6 @@ pub struct RequestBody {
     #[serde(rename = "userMessages")]
     pub user_messages: Vec<UserMessage>,
 
-    #[serde(rename = "contextType")]
-    pub context_type: String,
-
     #[serde(rename = "rootPath")]
     pub root_path: String,
 
@@ -35,6 +31,17 @@ pub struct RequestBody {
 
     #[serde(rename = "customModel", skip_serializing_if = "Option::is_none")]
     pub gpt_model: Option<String>,
+
+    /// Allow Cursor to use code snippets for product improvements.
+    #[serde(rename = "noStorageMode", serialize_with = "serialize_invert_bool")]
+    pub telemetry: bool,
+}
+
+fn serialize_invert_bool<S>(value: &bool, serializer: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    serializer.serialize_bool(!value)
 }
 
 impl RequestBody {
@@ -50,10 +57,10 @@ impl RequestBody {
             user_request,
             bot_messages,
             user_messages,
-            context_type: "copilot".to_owned(),
             root_path: root_path.unwrap_or_default(),
             api_key,
             gpt_model,
+            telemetry: true,
         }
     }
 

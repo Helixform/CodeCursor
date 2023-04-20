@@ -11,8 +11,8 @@ use wasm_bindgen::prelude::*;
 use crate::GenerateInput;
 
 use super::{
-    make_conversation_request,
     models::{MessageType, RequestBody},
+    send_conversation_request,
 };
 
 async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
@@ -29,7 +29,7 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
     #[cfg(debug_assertions)]
     console::log_str(&serde_json::to_string(&request_body).unwrap());
 
-    let mut state = make_conversation_request("/conversation", &request_body).await?;
+    let mut state = send_conversation_request("/conversation", &request_body).await?;
 
     #[cfg(debug_assertions)]
     console::log_str("response received");
