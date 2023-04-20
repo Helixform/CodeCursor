@@ -61,6 +61,9 @@ pub async fn sign_in() {
     if storage.get(AUTH_TOKEN_KEY).is_some() {
         // If there is already an authentication token, it means that the user has logged in
         // and does not need to log in again.
+        context
+            .show_information_message("You have already logged in.", js_sys::Array::new())
+            .await;
         return;
     }
 
