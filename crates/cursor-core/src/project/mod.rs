@@ -24,6 +24,16 @@ enum Task {
     Append(String),
 }
 
+impl Task {
+    fn title(&self) -> &str {
+        match self {
+            Task::Step(title) => title,
+            Task::Create(title) => title,
+            Task::Append(title) => title,
+        }
+    }
+}
+
 #[wasm_bindgen(js_name = generateProject)]
 pub async fn generate_project(prompt: &str) -> Result<JsValue, JsValue> {
     let prompt = prompt.to_owned();
@@ -67,9 +77,16 @@ pub async fn generate_project(prompt: &str) -> Result<JsValue, JsValue> {
 
                         // The message sent by the report will automatically disappear after a short period of time.
                         // In order to keep the text displayed on the dialog box, report the title every time data is returned.
+                        if current_task.is_some() {
+                            progress.report(current_task.as_ref().unwrap().title());
+                            continue;
+                        }
                         match &current_task {
-                            Some(Task::Step(title) | Task::Create(title) | Task::Append(title)) => {
-                                progress.report(&title);
+                            Some(Task::Create(_)) => {
+                                todo!()
+                            }
+                            Some(Task::Append(_)) => {
+                                todo!()
                             }
                             _ => {}
                         }

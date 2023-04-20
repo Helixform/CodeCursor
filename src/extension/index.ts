@@ -5,13 +5,9 @@ import { GenerateSession, getScratchpadManager } from "./generate";
 import { getGlobalState } from "./globalState";
 import { ChatPanelProvider } from "./chat/chatPanelProvider";
 import { sharedChatServiceImpl } from "./chat/chatServiceImpl";
-import {
-    generateProject,
-    setExtensionContext,
-    signIn,
-    signOut,
-} from "@crates/cursor-core";
+import { setExtensionContext, signIn, signOut } from "@crates/cursor-core";
 import { ExtensionContext } from "./context";
+import { handleGenerateProjectCommand } from "./project";
 
 function setHasActiveGenerateSessionContext(value: boolean) {
     vscode.commands.executeCommand(
@@ -95,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
             );
         }),
         vscode.commands.registerCommand("aicursor.generateProject", () => {
-            generateProject("a new Unity project");
+            handleGenerateProjectCommand();
         }),
         getScratchpadManager().registerTextDocumentContentProvider(),
         vscode.window.registerWebviewViewProvider(
