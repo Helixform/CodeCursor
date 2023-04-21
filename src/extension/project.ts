@@ -11,15 +11,16 @@ export async function handleGenerateProjectCommand() {
     const input = await vscode.window.showInputBox({
         title: "Generate A New Project",
         placeHolder: "Instructions for project to generate...",
+        prompt: "The project will be created in the directory of your currently opened workspace.",
     });
     if (!input) {
         return;
     }
 
     // Check if the workspace is empty.
-    const files = await vscode.workspace.fs.readDirectory(workspace.uri);
+    let files = await vscode.workspace.fs.readDirectory(workspace.uri);
     // Exclude hidden files.
-    files.filter((file) => !file[0].startsWith("."));
+    files = files.filter((file) => !file[0].startsWith("."));
     if (files.length > 0) {
         const confirmMessage = "Yes, I am sure";
         const cancelMessage = "No";

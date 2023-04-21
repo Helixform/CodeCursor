@@ -14,6 +14,20 @@ We believe there are more developers actively use Visual Studio Code as their ma
 
 You have to sign in the Cursor account or configure you own API keys to use this extension. Please refer to the [Custom API Keys](#custom-api-keys) section for details.
 
+### 🌟 **Experimental**: Generate entire projects with the AI 🌟
+
+We bring the experimental features of Cursor's latest AI-generated projects to CodeCursor. Now you can directly create entire projects through AI in VSCode.
+
+When you have opened a workspace, you will be able to see the `Generate Project` command in the Command Palette.
+
+![Project Generation](./artworks/project-generation.png)
+
+If the currently opened workspace is not empty, you will receive a warning dialog asking if you want to continue.
+
+![Workspace Not Empty Warning](./artworks/project-continue-warning.png)
+
+While project generation is in progress, a progress dialog will be displayed. You can click the cancel button on the progress bar at any time to cancel the task.
+
 ### Code Generation
 
 Just open a document and type `CodeCursor` in Command Palette. You will see the command below:
@@ -47,7 +61,8 @@ Cursor server may become unstable when it's under heavy traffic. You can provide
 
 ## Known Issues
 
-Due to limitations in the new version of the Cursor API, the automatic continuation ability for long code is currently unavailable.
+-   Due to limitations in the new version of the Cursor API, the automatic continuation ability for long code is currently unavailable.
+-   If you trigger `Generate Project` command multiple times simultaneously, undefined behavior may occur.
 
 To track all issues / file a new issue please go to the Github repo.
 

@@ -1,5 +1,35 @@
 # Change Log
 
+## 0.5.1
+
+### New Features
+
+-   Experimental: Generate entire projects with the AI
+
+### Fix
+
+-   Fix the issue of login and registration getting stuck
+
+## 0.4.1
+
+### Change
+
+-   Upgrade Cursor API to version `0.2.7`
+
+### Known Issues
+
+-   The login and registration functions are not available. The logged-in users are not affected.
+
+## 0.4.0
+
+### New Features
+
+-   Support log in with Cursor account
+
+### Fix
+
+-   Fixed the issue where the chat dialogue button disappears after moving the chat panel
+
 ## 0.3.2
 
 ### Add
