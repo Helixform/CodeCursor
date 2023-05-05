@@ -68,11 +68,13 @@ pub async fn sign_in() {
     }
 
     let uuid = Uuid::new_v4().to_string();
+    console::log_str(&format!("zhangzhuang uuid: {}", uuid));
     let verifier = base64_encode(random_bytes());
+    console::log_str(&format!("zhangzhuang verifier: {}", verifier));
     let challenge = base64_encode(sha256(verifier.clone()));
 
     let login_url = format!(
-        "https://cursor.so/loginDeepControl?challenge={challenge}&uuid={}",
+        "https://cursor.so/loginDeepControl?challenge={challenge}&uuid={}&newbackend=true",
         uuid.clone()
     );
 
@@ -131,6 +133,10 @@ async fn polling(
     );
 
     let mut interval = IntervalStream::new(2000);
+
+    // I don't know which value is most suitable, just use 20
+    let mut tried = 20;
+    
     loop {
         let defer_abort_future = defer_abort.clone().into_future();
         match select(defer_abort_future, interval.next()).await {
@@ -139,18 +145,32 @@ async fn polling(
             }
             _ => {}
         }
-        let mut response = make_request_with_legacy(
+        let response = make_request_with_legacy(
             &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
             HttpMethod::Get,
-            true,
+            false,
         )
         .send()
-        .await?;
+        .await;
+
+        // for network reason, we can't get the right response in one request,
+        // so we should try again when the current request is failed, otherwise
+        // we will lose "accessToken", and the prompt will appear every time when
+        // we give input even if we have already login.
+        if response.is_err() {
+            tried -= 1;
+            if tried > 0 {
+                continue
+            }
+        }
+
+        let mut response = response?;
 
         if let Some(chunk) = response.body().next().await {
             let data = chunk.to_string("utf-8");
             #[cfg(debug_assertions)]
             console::log_str(&data);
+
             match serde_json::from_str::<serde_json::Value>(&data).and_then(|value| {
                 if value.is_null() {
                     Ok(false)

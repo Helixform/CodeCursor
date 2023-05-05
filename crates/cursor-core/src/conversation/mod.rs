@@ -2,6 +2,7 @@ pub mod chat;
 pub mod generate;
 pub mod models;
 
+use node_bridge::http_client::HttpMethod;
 use wasm_bindgen::{JsError, JsValue};
 use wasm_bindgen_futures::spawn_local;
 
@@ -10,7 +11,7 @@ use crate::{
     context::get_extension_context,
     request::{
         stream::{make_stream_request, StreamResponseState},
-        JsonSendable,
+        JsonSendable, make_request_with_legacy,
     },
 };
 
@@ -23,7 +24,9 @@ async fn send_conversation_request(
     path: &str,
     body: &RequestBody,
 ) -> Result<StreamResponseState, JsValue> {
-    let mut request = make_stream_request(path, body);
+    // for /conversation api call, we must use "aicursor.com" host, so 
+    // we should call make_request_with_legacy whose legacy_host arg is false.
+    let mut request =  make_request_with_legacy(path, HttpMethod::Post, false).set_json_body(body);
     if body.api_key.is_none() {
         if let Some(token) = account_token() {
             request =

@@ -10,11 +10,16 @@ use serde::Serialize;
 ///
 /// We believe that Cursor will probably unify the host in the future, so this function is used for compatibility.
 pub fn make_request_with_legacy(path: &str, method: HttpMethod, legacy_host: bool) -> HttpRequest {
+    // I open the Cursor App and observe its http request, 
+    // and make some experiments, find these rules:
+    // - for /auth/poll, /gen_project, use "internal.cursor.sh"
+    // - for /conversation, use "aicursor.com"
     let host = if legacy_host {
         "aicursor.com"
     } else {
         "internal.cursor.sh"
     };
+
     HttpRequest::new(&format!("https://{host}{path}"))
         .set_method(method)
         .add_header("accept", "*/*")
