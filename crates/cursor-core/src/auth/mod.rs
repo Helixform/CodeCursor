@@ -68,7 +68,9 @@ pub async fn sign_in() {
     }
 
     let uuid = Uuid::new_v4().to_string();
+    console::log_str(&format!("zhangzhuang uuid: {}", uuid));
     let verifier = base64_encode(random_bytes());
+    console::log_str(&format!("zhangzhuang verifier: {}", verifier));
     let challenge = base64_encode(sha256(verifier.clone()));
 
     let login_url = format!(
