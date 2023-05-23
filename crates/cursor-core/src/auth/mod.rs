@@ -73,8 +73,11 @@ pub async fn sign_in() {
     console::log_str(&format!("zhangzhuang verifier: {}", verifier));
     let challenge = base64_encode(sha256(verifier.clone()));
 
+    // following this issue: https://github.com/getcursor/cursor/issues/613,
+    // it might not login as expect because of Great FireWall in China,
+    // use cursor.sh instead of cursor.so
     let login_url = format!(
-        "https://cursor.so/loginDeepControl?challenge={challenge}&uuid={}&newbackend=true",
+        "https://cursor.sh/loginDeepControl?challenge={challenge}&uuid={}&newbackend=true",
         uuid.clone()
     );
 
