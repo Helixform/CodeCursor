@@ -45,7 +45,7 @@ async fn send_conversation_request(
                     Some(pick) => {
                         context
                             .execute_command0(&format!(
-                                "aicursor.{}",
+                                "whalecloud.{}",
                                 if pick == SIGN_IN_ITEM {
                                     "signInUp"
                                 } else {

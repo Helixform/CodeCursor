@@ -145,9 +145,9 @@ export function ChatPage() {
                 <VSCodeTextArea
                     style={{ width: "100%" }}
                     rows={3}
-                    placeholder={`Talk about the ${
-                        hasSelection ? "selected contents" : "whole document"
-                    }...`}
+                    placeholder={`对 ${
+                        hasSelection ? "选中内容" : "整个文件"
+                    } 进行提问...`}
                     disabled={!isReady}
                     value={prompt}
                     onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -159,7 +159,7 @@ export function ChatPage() {
                     disabled={!isReady || prompt.length === 0}
                     onClick={handleAskAction}
                 >
-                    {`Ask (${confirmShortcut.label})`}
+                    {`提问 (${confirmShortcut.label})`}
                 </VSCodeButton>
             </div>
         </div>

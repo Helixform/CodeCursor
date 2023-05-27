@@ -158,7 +158,7 @@ export class GenerateSession {
             statusBarItem.text = "$(check) CodeCursor";
             statusBarItem.tooltip = "View Code Generation Result";
             statusBarItem.color = new vscode.ThemeColor("button.foreground");
-            statusBarItem.command = "aicursor.showLastResult";
+            statusBarItem.command = "whalecloud.showLastResult";
             statusBarItem.show();
             this.#statusBarItem = statusBarItem;
         }
@@ -186,7 +186,7 @@ export class GenerateSession {
                 "statusBarItem.errorBackground"
             );
             statusBarItem.color = new vscode.ThemeColor("button.foreground");
-            statusBarItem.command = "aicursor.showLastResult";
+            statusBarItem.command = "whalecloud.showLastResult";
             statusBarItem.show();
             this.#statusBarItem = statusBarItem;
         }

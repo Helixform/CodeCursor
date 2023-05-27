@@ -1,81 +1,32 @@
-# CodeCursor (Cursor for Visual Studio Code)
+# 1. 背景
 
-**Use Cursor right in the editor you love!**
+我们发现程序员大部分时间并不是在编码，而是在查阅示例代码或技术文档。获取的渠道有公司内部的代码库或知识库，也有外部许多网站，渠道零散。
 
-First of all, we would like to thank **Cursor Team** for their brilliant works. Please give their [app](https://www.cursor.so) a try!
+GPT 大模型在编程能力方面表现越来越出色，市面上已经有不少优秀的工具或插件，但几乎都开始收费，且费用昂贵。同时大部分服务都在国外，效率和稳定性无法保障。
 
-## What's Cursor? And Why This Extension?
+根据以上情况，行业里具备了优秀 AI 能力，而公司又有大量代码及文档，将这些能力及数据进行叠加，可以助力研发同学在 Coding 上提质提效。所以基于这些能力的浩鲸自己的编程助手呼之欲出。
 
-Cursor is an AI code editor based on OpenAI GPT models. You can write, edit and chat about your code with it. At this time, Cursor is only provided as a dedicated app, and the team currently has no plans to develop extensions for other editors or IDEs.
+# 2. 工具介绍
 
-We believe there are more developers actively use Visual Studio Code as their main tool for serious works. And this is why we built **CodeCursor**. It's not going to replace the Cursor app, but it provides another way to use Cursor.
+**浩鲸智能编程助手（WhaleCloud Coding Plus）**
 
-## Getting Started
+这是一款加持 GPT 大模型的编程助手，支持代码生成、代码纠错、代码调优、对话等 AI 场景，同时具备公司内部示例代码与优质技术文档的搜索能力，让研发沉浸在开发界面，帮助研发码出高效、码出质量。
 
-You have to sign in the Cursor account or configure you own API keys to use this extension. Please refer to the [Custom API Keys](#custom-api-keys) section for details.
+## 2.1. AI 编程
 
-### 🌟 **Experimental**: Generate entire projects with the AI 🌟
+### 2.1.1. 按需求描述生成代码
 
-We bring the experimental features of Cursor's latest AI-generated projects to CodeCursor. Now you can directly create entire projects through AI in VSCode.
+当出现代码不知道怎么写，无从下手时，基于快捷搜索框输入一段需求描述，助手会自动在编辑器中生成你需要的代码。
 
-When you have opened a workspace, you will be able to see the `Generate Project` command in the Command Palette.
+### 2.1.2. 按要求优化代码
 
-![Project Generation](./artworks/project-generation.png)
+可以对代码进行问题识别，根据需求目标进行代码优化，同时支持与优化前代码进行对比。
 
-If the currently opened workspace is not empty, you will receive a warning dialog asking if you want to continue.
+### 2.1.3. 给一段代码添加注释
 
-![Workspace Not Empty Warning](./artworks/project-continue-warning.png)
+当遇到前辈代码没有注释，难看懂的情况下，需要增加注释辅助查阅，或者是自己新编写的代码需要快速增加注释的时候，使用助手可以快速完成。
 
-While project generation is in progress, a progress dialog will be displayed. You can click the cancel button on the progress bar at any time to cancel the task.
+### 2.1.4. 根据需求进行代码或者开发思路生成
 
-### Code Generation
-
-Just open a document and type `CodeCursor` in Command Palette. You will see the command below:
-
-![Command Palette](./artworks/command-palette.png)
-
-Type your prompt and the code generation will just begin. To edit some existing code, you can also select something before perform this command, when accepting the change, the selected code will be replaced with the generated one.
-
-While code generation is in progress, the following status bar item will be displayed:
-
-![Generating](./artworks/generating.png)
-
-Click on it to cancel the request. Upon completion of code generation, the status bar item will change a "check mark". You can click it reopen the generated result at any time.
-
-The generated contents will be live streamed, and shown as a text diff. You can simply apply the changes by clicking "Accept" button in the notification:
-
-![Completed](./artworks/completed.png)
-
-### Chat
-
-You can chat with your code just like using ChatGPT. To open the chat panel, click "CodeCursor" icon on the Activity Bar. You can ask questions about the currently opened document or a selected piece of text.
-
-![Chat](./artworks/chat.png)
-
-## Custom API Keys
-
-Cursor server may become unstable when it's under heavy traffic. You can provide your own OpenAI API keys to have a smoother user experience. You can also choose the model you want to use when a key is set. For details, please refer to the extension configuration.
-
-> **Note:**  
-> Your API key will be sent to Cursor server.
-
-## Known Issues
-
--   Due to limitations in the new version of the Cursor API, the automatic continuation ability for long code is currently unavailable.
--   If you trigger `Generate Project` command multiple times simultaneously, undefined behavior may occur.
-
-To track all issues / file a new issue please go to the Github repo.
-
-## Security Consideration
-
-The extension **DOES NOT** collect your code, environment data, or any information that could be used to track you. Additionally, we ensure that the Cursor server will not receive those data either. Only the document you perform code generation against will be uploaded to the Cursor server, and they are responsible for preventing any leaks of your code.
-
-## Contributing
-
-To develop the extension, clone the repository and open it in Visual Studio Code. There are two launch targets: "Run Extension" and "Run Extension (Without Rust)". if you only want to debug or work on the UI parts, then you can select "Run Extension (Without Rust)" for faster build speed.
-
-You are welcome to open Pull Requests at any time. But it's still better to start a discussion before making some epic changes.
-
-## License
-
-MIT
+编写代码没有头绪时，可以询问助手，进行思路生成，生成思路的同时还可以提供样例代码，大大提高了效率。
+AI 能力对标了基于 GPT 大模型的 Cursor，相关功能做了平替，AI 能力很强大，同学们可继续挖掘探索新的场景。

@@ -34,7 +34,7 @@ type CustomModelConfiguration = {
 };
 
 export function getCustomModelConfiguration(): CustomModelConfiguration | null {
-    const config = vscode.workspace.getConfiguration("aicursor");
+    const config = vscode.workspace.getConfiguration("whalecloud");
     const apiKey = config.get("openaiApiKey", "");
     const model = config.get("model", "");
     if (apiKey === "") {

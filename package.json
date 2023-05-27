@@ -1,34 +1,22 @@
 {
-    "name": "aicursor",
-    "displayName": "CodeCursor (Cursor for VS Code)",
-    "description": "Cursor integration for Visual Studio Code",
-    "version": "0.5.1",
-    "publisher": "ktiays",
+    "name": "whalecloud-coding-vscode-plugin",
+    "displayName": "浩鲸智能编程助手（WhaleCloud Coding Plus）",
+    "description": "浩鲸智能编程助手（WhaleCloud Coding Plus） for Visual Studio Code",
+    "version": "0.0.1",
+    "publisher": "tigerwong",
     "repository": {
         "type": "git",
-        "url": "https://github.com/Helixform/CodeCursor"
+        "url": "https://github.com/wangxh89/whalecloud-coding-vscode-plugin"
     },
     "icon": "icon.png",
     "engines": {
         "vscode": "^1.74.0"
     },
     "categories": [
-        "Machine Learning",
-        "Programming Languages",
-        "Snippets",
-        "Education"
+        "Other"
     ],
     "keywords": [
-        "chatgpt",
-        "gpt",
-        "gpt4",
-        "gpt3.5",
-        "openai",
-        "copilot",
-        "codex",
-        "code generation",
-        "code explanation",
-        "code summary"
+        "whalecloud"
     ],
     "activationEvents": [
         "onCommand:*"
@@ -37,68 +25,68 @@
     "contributes": {
         "commands": [
             {
-                "command": "aicursor.generateCode",
+                "command": "whalecloud.generateCode",
                 "title": "Generate Code",
                 "enablement": "activeEditor =~ /^workbench\\.editors\\./",
-                "category": "CodeCursor"
+                "category": "WhaleCloud"
             },
             {
-                "command": "aicursor.showLastResult",
+                "command": "whalecloud.showLastResult",
                 "title": "Show Generated Code",
-                "enablement": "aicursor.hasActiveGenerateSession",
-                "category": "CodeCursor"
+                "enablement": "whalecloud.hasActiveGenerateSession",
+                "category": "WhaleCloud"
             },
             {
-                "command": "aicursor.acceptChanges",
+                "command": "whalecloud.acceptChanges",
                 "title": "Accept Changes",
-                "enablement": "activeEditor =~ /^workbench\\.editors\\./ && aicursor.hasActiveGenerateSession",
-                "category": "CodeCursor"
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./ && whalecloud.hasActiveGenerateSession",
+                "category": "WhaleCloud"
             },
             {
-                "command": "aicursor.rejectChanges",
+                "command": "whalecloud.rejectChanges",
                 "title": "Reject Changes",
-                "enablement": "activeEditor =~ /^workbench\\.editors\\./ && aicursor.hasActiveGenerateSession",
-                "category": "CodeCursor"
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./ && whalecloud.hasActiveGenerateSession",
+                "category": "WhaleCloud"
             },
             {
-                "command": "aicursor.resetChat",
+                "command": "whalecloud.resetChat",
                 "title": "Reset Chat",
-                "category": "CodeCursor",
+                "category": "WhaleCloud",
                 "icon": "$(trash)"
             },
             {
-                "command": "aicursor.signInUp",
+                "command": "whalecloud.signInUp",
                 "title": "Sign In / Sign Up",
-                "category": "CodeCursor"
+                "category": "WhaleCloud"
             },
             {
-                "command": "aicursor.signOut",
+                "command": "whalecloud.signOut",
                 "title": "Sign Out",
-                "category": "CodeCursor"
+                "category": "WhaleCloud"
             },
             {
-                "command": "aicursor.configureApiKey",
+                "command": "whalecloud.configureApiKey",
                 "title": "Configure API Key",
-                "category": "CodeCursor"
+                "category": "WhaleCloud"
             },
             {
-                "command": "aicursor.generateProject",
+                "command": "whalecloud.generateProject",
                 "title": "Generate Project",
                 "enablement": "workspaceFolders != null && workspaceFolderCount > 0",
-                "category": "CodeCursor"
+                "category": "WhaleCloud"
             }
         ],
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "aicursor",
-                    "title": "CodeCursor",
+                    "id": "whalecloud",
+                    "title": "WhaleCloud",
                     "icon": "activitybar-icon.svg"
                 }
             ]
         },
         "views": {
-            "aicursor": [
+            "whalecloud": [
                 {
                     "type": "webview",
                     "id": "chat",
@@ -109,17 +97,17 @@
         "menus": {
             "editor/context": [
                 {
-                    "submenu": "aicursor.submenu"
+                    "submenu": "whalecloud.submenu"
                 }
             ],
-            "aicursor.submenu": [
+            "whalecloud.submenu": [
                 {
-                    "command": "aicursor.generateCode"
+                    "command": "whalecloud.generateCode"
                 }
             ],
             "view/title": [
                 {
-                    "command": "aicursor.resetChat",
+                    "command": "whalecloud.resetChat",
                     "when": "view == chat",
                     "group": "navigation"
                 }
@@ -127,19 +115,19 @@
         },
         "submenus": [
             {
-                "id": "aicursor.submenu",
-                "label": "CodeCursor"
+                "id": "whalecloud.submenu",
+                "label": "WhaleCloud"
             }
         ],
         "configuration": {
-            "title": "CodeCursor",
+            "title": "浩鲸智能编程助手",
             "properties": {
-                "aicursor.openaiApiKey": {
+                "whalecloud.openaiApiKey": {
                     "type": "string",
                     "default": "",
-                    "description": "OpenAI API key for using Cursor with your own quota."
+                    "description": "ZCM Key"
                 },
-                "aicursor.model": {
+                "whalecloud.model": {
                     "type": "string",
                     "default": "gpt-3.5-turbo",
                     "enum": [
@@ -150,7 +138,7 @@
                         "Use GPT 3.5 Turbo model for code generation and chat",
                         "Use GPT 4 model for code generation and chat (requires access invitation)"
                     ],
-                    "markdownDescription": "Model to use for code generation and chat. Only applies when `#aicursor.openaiApiKey#` is set."
+                    "markdownDescription": ""
                 }
             }
         }

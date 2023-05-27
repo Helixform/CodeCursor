@@ -13,7 +13,7 @@ import { handleGenerateProjectCommand } from "./project";
 function setHasActiveGenerateSessionContext(value: boolean) {
     vscode.commands.executeCommand(
         "setContext",
-        "aicursor.hasActiveGenerateSession",
+        "whalecloud.hasActiveGenerateSession",
         value
     );
 }
@@ -62,36 +62,36 @@ export function activate(context: vscode.ExtensionContext) {
     getGlobalState().storage = context.globalState;
 
     context.subscriptions.push(
-        vscode.commands.registerCommand("aicursor.generateCode", () => {
+        vscode.commands.registerCommand("whalecloud.generateCode", () => {
             handleGenerateCodeCommand();
         }),
-        vscode.commands.registerCommand("aicursor.showLastResult", () => {
+        vscode.commands.registerCommand("whalecloud.showLastResult", () => {
             getGlobalState().activeSession?.showResult();
         }),
-        vscode.commands.registerCommand("aicursor.acceptChanges", () => {
+        vscode.commands.registerCommand("whalecloud.acceptChanges", () => {
             getGlobalState().activeSession?.applyChanges();
         }),
-        vscode.commands.registerCommand("aicursor.rejectChanges", () => {
+        vscode.commands.registerCommand("whalecloud.rejectChanges", () => {
             const globalState = getGlobalState();
             globalState.activeSession?.dispose();
             globalState.activeSession = null;
         }),
-        vscode.commands.registerCommand("aicursor.resetChat", () => {
+        vscode.commands.registerCommand("whalecloud.resetChat", () => {
             sharedChatServiceImpl().clearSession();
         }),
-        vscode.commands.registerCommand("aicursor.signInUp", () => {
+        vscode.commands.registerCommand("whalecloud.signInUp", () => {
             signIn();
         }),
-        vscode.commands.registerCommand("aicursor.signOut", () => {
+        vscode.commands.registerCommand("whalecloud.signOut", () => {
             signOut();
         }),
-        vscode.commands.registerCommand("aicursor.configureApiKey", () => {
+        vscode.commands.registerCommand("whalecloud.configureApiKey", () => {
             vscode.commands.executeCommand(
                 "workbench.action.openSettings",
-                "aicursor.openaiApiKey"
+                "whalecloud.openaiApiKey"
             );
         }),
-        vscode.commands.registerCommand("aicursor.generateProject", () => {
+        vscode.commands.registerCommand("whalecloud.generateProject", () => {
             handleGenerateProjectCommand();
         }),
         getScratchpadManager().registerTextDocumentContentProvider(),

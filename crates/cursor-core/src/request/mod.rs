@@ -10,11 +10,7 @@ use serde::Serialize;
 ///
 /// We believe that Cursor will probably unify the host in the future, so this function is used for compatibility.
 pub fn make_request_with_legacy(path: &str, method: HttpMethod, legacy_host: bool) -> HttpRequest {
-    let host = if legacy_host {
-        "aicursor.com"
-    } else {
-        "internal.cursor.sh"
-    };
+    let host = "dev.iwhalecloud.com/faas/serverless/codingplus";
     HttpRequest::new(&format!("https://{host}{path}"))
         .set_method(method)
         .add_header("accept", "*/*")
