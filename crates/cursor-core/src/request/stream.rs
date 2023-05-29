@@ -37,11 +37,13 @@ impl StreamResponseState {
                             // 2-1. 如果失败，则直接返回 如 [DONE]
                             console::log_str("-------2-1------");
                             console::log_str(&suffix);
-                            if suffix.starts_with("[DONE]") {
-                                Some(String::from(suffix))
-                            } else {
-                                None
-                            }
+                            None
+                            // if suffix.starts_with("[DONE]") {
+                            //     console::log_str("-----我已经 starts_with了------");
+                            //     Some(String::from(suffix))
+                            // } else {
+                            //     None
+                            // }
                         } else {
                             // 2-2. 如果成功,则取一下值，取的到则返回值，否则也是返回None
                             let v_data: Value = parse_ret.unwrap();

@@ -110,7 +110,7 @@ export class Scratchpad implements ResultStream<string> {
     }
 
     write(text: string) {
-        this.contents += text;
+        this.contents += text.replace(/\\n/g, "\n"); // 使用正则表达式和replace方法
         this.#notifyChanges(true);
     }
 

@@ -80,6 +80,7 @@ export function ChatPage() {
         setAutoScrollFlag(AUTO_SCROLL_FLAG_FORCED);
     }, []);
     const updateMessageAction = useCallback((msg: MessageItemModel) => {
+        msg.contents = msg.contents.replace(/\\n/g, "\n"); // 使用正则表达式和replace方法
         setMessages((prev) => {
             return messagesWithUpdatedBotMessage(prev, msg);
         });

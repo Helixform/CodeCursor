@@ -2,7 +2,7 @@
     "name": "whalecloud-coding-vscode-plugin",
     "displayName": "浩鲸智能编程助手（WhaleCloud Coding Plus）",
     "description": "浩鲸智能编程助手（WhaleCloud Coding Plus） for Visual Studio Code",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "publisher": "tigerwong",
     "repository": {
         "type": "git",
@@ -26,7 +26,31 @@
         "commands": [
             {
                 "command": "whalecloud.generateCode",
-                "title": "Generate Code",
+                "title": "生成代码",
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./",
+                "category": "WhaleCloud"
+            },
+            {
+                "command": "whalecloud.addTests",
+                "title": "添加测试（敬请期待）",
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./",
+                "category": "WhaleCloud"
+            },
+            {
+                "command": "whalecloud.whyBroken",
+                "title": "为什么它坏了？（敬请期待）",
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./",
+                "category": "WhaleCloud"
+            },
+            {
+                "command": "whalecloud.explainPls",
+                "title": "解释代码（敬请期待）",
+                "enablement": "activeEditor =~ /^workbench\\.editors\\./",
+                "category": "WhaleCloud"
+            },
+            {
+                "command": "whalecloud.refactor",
+                "title": "重构器（敬请期待）",
                 "enablement": "activeEditor =~ /^workbench\\.editors\\./",
                 "category": "WhaleCloud"
             },
@@ -89,7 +113,7 @@
             "whalecloud": [
                 {
                     "type": "webview",
-                    "id": "chat",
+                    "id": "whalecloudchatview",
                     "name": "Chat"
                 }
             ]
@@ -103,12 +127,24 @@
             "whalecloud.submenu": [
                 {
                     "command": "whalecloud.generateCode"
+                },
+                {
+                    "command": "whalecloud.addTests"
+                },
+                {
+                    "command": "whalecloud.whyBroken"
+                },
+                {
+                    "command": "whalecloud.explainPls"
+                },
+                {
+                    "command": "whalecloud.refactor"
                 }
             ],
             "view/title": [
                 {
                     "command": "whalecloud.resetChat",
-                    "when": "view == chat",
+                    "when": "view == whalecloudchatview",
                     "group": "navigation"
                 }
             ]

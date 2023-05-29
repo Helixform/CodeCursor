@@ -161,7 +161,7 @@ export class ChatServiceImpl implements IChatService {
                     // TODO: optimize the display of error message.
                     this.#updateMessage(
                         replyMsgId,
-                        "\n(Response interrupted)",
+                        "\n(请求失败，请检查 1. ZCM Key是否填写正确 2. 至dev.iwhalecloud.com 网络连接)",
                         true
                     );
                 } finally {

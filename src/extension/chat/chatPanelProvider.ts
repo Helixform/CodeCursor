@@ -12,7 +12,7 @@ import { MessageItemModel } from "../../common/chatService/model";
 export class ChatPanelProvider
     implements vscode.WebviewViewProvider, ChatServiceClient
 {
-    static readonly viewType = "chat";
+    static readonly viewType = "whalecloudchatview";
 
     #view: vscode.WebviewView | null = null;
     #extensionContext: vscode.ExtensionContext;
@@ -139,7 +139,7 @@ export class ChatPanelProvider
                 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline' ; script-src 'nonce-${nonce}';">
                 <title>CodeCursor</title>
                 <script nonce="${nonce}">
-                    window.__codeCursorPageName = "chat";
+                    window.__codeCursorPageName = "whalecloudchatview";
                 </script>
                 <link href="${codiconsUri}" rel="stylesheet" />
             </head>

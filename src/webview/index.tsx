@@ -7,7 +7,7 @@ import { ChatPage } from "./chat";
 function App() {
     const pageName = window.__codeCursorPageName;
 
-    if (pageName === "chat") {
+    if (pageName === "whalecloudchatview") {
         return <ChatPage />;
     }
 
