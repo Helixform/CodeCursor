@@ -4,6 +4,7 @@ pub mod context;
 mod conversation;
 mod project;
 mod request;
+pub mod services;
 pub mod storage;
 
 use node_bridge::bindings::AbortSignal;
