@@ -51,7 +51,7 @@ pub struct HttpRequest {
     url: String,
     method: HttpMethod,
     headers: HashMap<String, String>,
-    body: Option<String>,
+    body: Option<Vec<u8>>,
 }
 
 impl HttpRequest {
@@ -78,9 +78,12 @@ impl HttpRequest {
         self
     }
 
-    /// Sets the body string.
-    pub fn set_body(mut self, body: String) -> Self {
-        self.body = Some(body);
+    /// Sets the request body.
+    pub fn set_body<T>(mut self, body: T) -> Self
+    where
+        T: AsRef<[u8]>,
+    {
+        self.body = Some(body.as_ref().to_vec());
         self
     }
 
@@ -129,7 +132,7 @@ impl HttpRequest {
 
         // Send the request with an optional body.
         if let Some(body) = self.body {
-            let body_buf = Buffer::from_str(&body, "utf-8");
+            let body_buf = Buffer::from_bytes(&body);
             req.write(body_buf);
         }
         req.end();

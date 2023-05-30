@@ -29,8 +29,8 @@ pub struct RequestBody {
     #[serde(rename = "apiKey", skip_serializing_if = "Option::is_none")]
     pub api_key: Option<String>,
 
-    #[serde(rename = "customModel", skip_serializing_if = "Option::is_none")]
-    pub gpt_model: Option<String>,
+    #[serde(rename = "customModel")]
+    pub gpt_model: String,
 
     /// Allow Cursor to use code snippets for product improvements.
     #[serde(rename = "noStorageMode", serialize_with = "serialize_invert_bool")]
@@ -51,7 +51,7 @@ impl RequestBody {
         bot_messages: Vec<BotMessage>,
         root_path: Option<String>,
         api_key: Option<String>,
-        gpt_model: Option<String>,
+        gpt_model: String,
     ) -> Self {
         Self {
             user_request,

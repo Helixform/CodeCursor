@@ -46,7 +46,7 @@ interface IGenerateInput {
     get resultStream(): IResultStream;
     get abortSignal(): AbortSignal;
     get apiKey(): string | null;
-    get gptModel(): string | null;
+    get gptModel(): string;
     get languageId(): string;
 }
 "#;
@@ -120,7 +120,7 @@ extern "C" {
     pub fn api_key(this: &GenerateInput) -> Option<String>;
 
     #[wasm_bindgen(method, getter, structural, js_name = gptModel)]
-    pub fn gpt_model(this: &GenerateInput) -> Option<String>;
+    pub fn gpt_model(this: &GenerateInput) -> String;
 
     #[wasm_bindgen(method, getter, structural, js_name = languageId)]
     pub fn language_id(this: &GenerateInput) -> String;

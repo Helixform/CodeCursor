@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { ResultStream } from "./resultStream";
-import { getCustomModelConfiguration } from "../utils";
+import { getModelConfiguration } from "../utils";
 import {
     generateCode as rustGenerateCode,
     ISelectionRange,
@@ -66,7 +66,7 @@ export async function generateCode(
     });
     const { signal: abortSignal } = abortController;
 
-    const customModelConfig = getCustomModelConfiguration();
+    const customModelConfig = getModelConfiguration();
 
     await rustGenerateCode({
         prompt,
@@ -77,7 +77,7 @@ export async function generateCode(
         resultStream,
         abortSignal,
         apiKey: customModelConfig?.openaiAPIKey || null,
-        gptModel: customModelConfig?.model || null,
+        gptModel: customModelConfig.model,
         cursor,
         languageId: document.languageId,
     });

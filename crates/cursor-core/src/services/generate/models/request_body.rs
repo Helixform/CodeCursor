@@ -5,12 +5,7 @@ use crate::GenerateInput;
 use super::current_file::CurrentFile;
 
 #[derive(Debug, Clone, Copy, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum MessageType {
-    Edit,
-    Generate,
-    Freeform,
-}
+pub struct ExplicitContext;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ModelDetails {
@@ -30,6 +25,9 @@ pub struct RequestBody {
 
     #[serde(rename = "apiKey", skip_serializing_if = "Option::is_none")]
     pub api_key: Option<String>,
+
+    #[serde(rename = "explicitContext")]
+    pub context: ExplicitContext,
 }
 
 impl RequestBody {
@@ -44,10 +42,11 @@ impl RequestBody {
                 cursor: input.cursor().into(),
             },
             model_details: ModelDetails {
-                name: input.gpt_model().unwrap_or_default(),
+                name: input.gpt_model(),
             },
             root_path: input.workspace_directory().unwrap_or_default(),
             api_key: input.api_key(),
+            context: ExplicitContext,
         }
     }
 }

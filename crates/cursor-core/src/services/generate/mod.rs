@@ -5,6 +5,10 @@ use node_bridge::prelude::*;
 
 use crate::GenerateInput;
 
+use self::models::request_body::RequestBody;
+
+use super::stream::make_stream;
+
 #[derive(Debug, Clone, Copy)]
 pub enum CodeGenerateMode {
     Generate,
@@ -22,6 +26,10 @@ impl CodeGenerateService {
     }
 
     pub async fn generate(&self, input: &GenerateInput) -> Result<()> {
+        make_stream(
+            "/aiserver.v1.AiService/StreamGenerate",
+            &RequestBody::new_with_input(input),
+        );
         // let selection = input.selection_range();
 
         // let message_type = if selection.is_empty() {
