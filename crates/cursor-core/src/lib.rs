@@ -13,8 +13,16 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(typescript_custom_section)]
 const ISELECTION_RANGE: &'static str = r#"
 interface ISelectionRange {
-    get offset(): number;
-    get length(): number;
+    get start(): IPosition;
+    get end(): IPosition;
+}
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const IPOSITION: &'static str = r#"
+interface IPosition {
+    get line(): number;
+    get character(): number;
 }
 "#;
 
@@ -33,11 +41,13 @@ interface IGenerateInput {
     get documentText(): string;
     get filePath(): string;
     get workspaceDirectory(): string | null;
+    get cursor(): IPosition;
     get selectionRange(): ISelectionRange;
     get resultStream(): IResultStream;
     get abortSignal(): AbortSignal;
     get apiKey(): string | null;
     get gptModel(): string | null;
+    get languageId(): string;
 }
 "#;
 
@@ -47,16 +57,22 @@ extern "C" {
     pub type SelectionRange;
 
     #[wasm_bindgen(method, getter, structural)]
-    pub fn offset(this: &SelectionRange) -> usize;
+    pub fn start(this: &SelectionRange) -> Position;
 
     #[wasm_bindgen(method, getter, structural)]
-    pub fn length(this: &SelectionRange) -> usize;
+    pub fn end(this: &SelectionRange) -> Position;
 }
 
-impl SelectionRange {
-    pub fn is_empty(&self) -> bool {
-        self.length() == 0
-    }
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "IPosition")]
+    pub type Position;
+
+    #[wasm_bindgen(method, getter, structural)]
+    pub fn line(this: &Position) -> usize;
+
+    #[wasm_bindgen(method, getter, structural)]
+    pub fn character(this: &Position) -> usize;
 }
 
 #[wasm_bindgen]
@@ -91,6 +107,9 @@ extern "C" {
     #[wasm_bindgen(method, getter, structural, js_name = selectionRange)]
     pub fn selection_range(this: &GenerateInput) -> SelectionRange;
 
+    #[wasm_bindgen(method, getter, structural, js_name = cursor)]
+    pub fn cursor(this: &GenerateInput) -> Position;
+
     #[wasm_bindgen(method, getter, structural, js_name = resultStream)]
     pub fn result_stream(this: &GenerateInput) -> ResultStream;
 
@@ -102,6 +121,9 @@ extern "C" {
 
     #[wasm_bindgen(method, getter, structural, js_name = gptModel)]
     pub fn gpt_model(this: &GenerateInput) -> Option<String>;
+
+    #[wasm_bindgen(method, getter, structural, js_name = languageId)]
+    pub fn language_id(this: &GenerateInput) -> String;
 }
 
 impl GenerateInput {

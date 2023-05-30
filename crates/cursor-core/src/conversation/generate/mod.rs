@@ -18,11 +18,7 @@ use super::{
 async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
     let selection = input.selection_range();
 
-    let message_type = if selection.is_empty() {
-        MessageType::Generate
-    } else {
-        MessageType::Edit
-    };
+    let message_type = MessageType::Generate;
     let request_body = RequestBody::new_with_input(input, message_type);
     let result_stream = input.result_stream();
 
@@ -50,6 +46,8 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
 
 #[wasm_bindgen(js_name = generateCode)]
 pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
+    console::log1(input);
+    return Ok(());
     let defer_abort = Defer::new();
     let defer_abort_clone = defer_abort.clone();
     let abort_signal = input.abort_signal();

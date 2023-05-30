@@ -1,5 +1,7 @@
 use serde::Serialize;
 
+use crate::{Position as IPosition, SelectionRange};
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Selection {
     #[serde(rename = "startPosition")]
@@ -8,18 +10,34 @@ pub struct Selection {
     pub end: Position,
 }
 
-impl Selection {
-    pub fn new(start: usize, end: usize) -> Self {
+impl From<SelectionRange> for Selection {
+    fn from(value: SelectionRange) -> Self {
         Self {
-            start: Position { line: start },
-            end: Position { line: end },
+            start: value.start().into(),
+            end: value.end().into(),
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Position {
+    #[serde(skip_serializing_if = "column_is_zero")]
     pub line: usize,
+    #[serde(skip_serializing_if = "column_is_zero")]
+    pub column: usize,
+}
+
+impl From<IPosition> for Position {
+    fn from(value: IPosition) -> Self {
+        Self {
+            line: value.line(),
+            column: value.character(),
+        }
+    }
+}
+
+fn column_is_zero(column: &usize) -> bool {
+    *column == 0
 }
 
 #[derive(Debug, Clone, Serialize)]

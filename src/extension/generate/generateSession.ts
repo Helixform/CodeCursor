@@ -2,12 +2,13 @@ import * as vscode from "vscode";
 import { diff_match_patch } from "diff-match-patch";
 
 import { Scratchpad } from "./scratchpad";
-import { generateCode, SelectionRange } from "./core";
+import { generateCode, Position, SelectionRange } from "./core";
 import { getOpenedTab } from "../utils";
 
 export class GenerateSession {
     #prompt: string;
     #selectionRange: SelectionRange;
+    #cursor: Position;
     #document: vscode.TextDocument;
     #documentSnapshot: string;
     #scratchpad: Scratchpad | null;
@@ -20,15 +21,12 @@ export class GenerateSession {
         const documentSnapshot = document.getText();
         const selectionText = document.getText(selection);
 
-        const selectionStartOffset = document.offsetAt(selection.start);
-        const selectionEndOffset = document.offsetAt(selection.end);
-        const selectionRange = new SelectionRange(
-            selectionStartOffset,
-            selectionEndOffset - selectionStartOffset
-        );
-
         this.#prompt = prompt;
-        this.#selectionRange = selectionRange;
+        this.#selectionRange = new SelectionRange(selection);
+        this.#cursor = new Position(
+            selection.active.line,
+            selection.active.character
+        );
         this.#document = document;
         this.#documentSnapshot = documentSnapshot;
         this.#scratchpad = new Scratchpad(selectionText);
@@ -69,6 +67,7 @@ export class GenerateSession {
                         this.#prompt,
                         this.#document,
                         this.#selectionRange,
+                        this.#cursor,
                         token,
                         scratchpad
                     );
@@ -221,12 +220,22 @@ export class GenerateSession {
         // Use DMP to reconcile the generated contents with the modified document.
         const selectionRange = this.#selectionRange;
         const originalContents = this.#documentSnapshot;
+        const startOffset = document.offsetAt(
+            new vscode.Position(
+                selectionRange.start.line,
+                selectionRange.start.character
+            )
+        );
+        const endOffset = document.offsetAt(
+            new vscode.Position(
+                selectionRange.end.line,
+                selectionRange.end.character
+            )
+        );
         const patchedOriginalContents =
-            originalContents.substring(0, selectionRange.offset) +
+            originalContents.substring(0, startOffset) +
             scratchpad.contents +
-            originalContents.substring(
-                selectionRange.offset + selectionRange.length
-            );
+            originalContents.substring(endOffset);
 
         const dmp = new diff_match_patch();
         const diff = dmp.diff_main(

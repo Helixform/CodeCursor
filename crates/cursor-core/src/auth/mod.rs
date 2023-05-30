@@ -142,7 +142,6 @@ async fn polling(
         let mut response = make_request_with_legacy(
             &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
             HttpMethod::Get,
-            true,
         )
         .send()
         .await?;
