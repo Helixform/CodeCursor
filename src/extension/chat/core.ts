@@ -40,6 +40,8 @@ export async function chat(
             abortSignal,
             apiKey: customModelConfig?.openaiAPIKey || null,
             gptModel: customModelConfig?.model || null,
+            cursor: null as any,
+            languageId: document.languageId,
         });
     } finally {
         isProcessing = false;

@@ -72,7 +72,7 @@ pub async fn sign_in() {
     let challenge = base64_encode(sha256(verifier.clone()));
 
     let login_url = format!(
-        "https://cursor.so/loginDeepControl?challenge={challenge}&uuid={}",
+        "https://cursor.sh/loginDeepControl?challenge={challenge}&uuid={}",
         uuid.clone()
     );
 
@@ -130,7 +130,7 @@ async fn polling(
         .into_js_value(),
     );
 
-    let mut interval = IntervalStream::new(2000);
+    let mut interval = IntervalStream::new(1000);
     loop {
         let defer_abort_future = defer_abort.clone().into_future();
         match select(defer_abort_future, interval.next()).await {
