@@ -67,16 +67,19 @@ where
     Ok(response.into())
 }
 
-#[derive(Debug)]
-struct FlaggedData {
+#[derive(Debug, Clone)]
+pub struct FlaggedData {
     pub data: Vec<u8>,
     pub flag: u8,
 }
 
 impl FlaggedData {
-    pub fn new(data: &[u8], flag: u8) -> Self {
+    pub fn new<T>(data: T, flag: u8) -> Self
+    where
+        T: AsRef<[u8]>,
+    {
         Self {
-            data: data.to_vec(),
+            data: data.as_ref().to_vec(),
             flag,
         }
     }
