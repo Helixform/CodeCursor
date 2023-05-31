@@ -1,13 +1,14 @@
 pub mod models;
 
-use anyhow::Result;
-use node_bridge::prelude::*;
+use futures::StreamExt;
+use node_bridge::prelude::console;
+use wasm_bindgen::JsValue;
 
 use crate::GenerateInput;
 
 use self::models::request_body::RequestBody;
 
-use super::stream::make_stream;
+use super::{flagged_chunk::FlaggedChunk, stream::make_stream};
 
 #[derive(Debug, Clone, Copy)]
 pub enum CodeGenerateMode {
@@ -25,40 +26,27 @@ impl CodeGenerateService {
         Self { mode }
     }
 
-    pub async fn generate(&self, input: &GenerateInput) -> Result<()> {
-        make_stream(
+    pub async fn generate(&self, input: &GenerateInput) -> Result<(), JsValue> {
+        let mut state = make_stream(
             "/aiserver.v1.AiService/StreamGenerate",
             &RequestBody::new_with_input(input),
-        );
-        // let selection = input.selection_range();
+        )
+        .await?;
 
-        // let message_type = if selection.is_empty() {
-        //     MessageType::Generate
-        // } else {
-        //     MessageType::Edit
-        // };
-        // let request_body = RequestBody::new_with_input(input, message_type);
-        // let result_stream = input.result_stream();
+        let result_stream = input.result_stream();
+        let mut data_stream = state.data_stream();
+        while let Some(chunk) = data_stream.next().await {
+            if chunk.is_end() {
+                break;
+            }
+            let data = chunk.utf8_string()?;
+        }
+        drop(data_stream);
 
-        // #[cfg(debug_assertions)]
-        // console::log_str(&serde_json::to_string(&request_body).unwrap());
+        // Make sure the response is fully received without errors.
+        state.complete().await?;
+        result_stream.end();
 
-        // let mut state = send_conversation_request("/conversation", &request_body).await?;
-
-        // #[cfg(debug_assertions)]
-        // console::log_str("response received");
-
-        // let mut data_stream = state.data_stream();
-        // while let Some(data) = data_stream.next().await {
-        //     result_stream.write(&data);
-        //     #[cfg(debug_assertions)]
-        //     console::log_str(&format!("wrote: {}", &data));
-        // }
-        // drop(data_stream);
-
-        // // Make sure the response is fully received without errors.
-        // state.complete().await?;
-        // result_stream.end();
         Ok(())
     }
 }

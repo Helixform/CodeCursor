@@ -74,6 +74,10 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
                     let mut current_task = None;
                     let mut file_writer = None;
                     while let Some(data) = data_stream.next().await {
+                        // The function of generating a project is temporarily unavailable.
+                        // This is to ensure the compatibility logic for compiling passes.
+                        let data = String::from_utf8(data).unwrap();
+
                         #[cfg(debug_assertions)]
                         console::log_str(&data);
 

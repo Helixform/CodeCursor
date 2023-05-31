@@ -32,9 +32,9 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
 
     let mut data_stream = state.data_stream();
     while let Some(data) = data_stream.next().await {
-        result_stream.write(&data);
-        #[cfg(debug_assertions)]
-        console::log_str(&format!("wrote: {}", &data));
+        // result_stream.write(&data);
+        // #[cfg(debug_assertions)]
+        // console::log_str(&format!("wrote: {}", &data));
     }
     drop(data_stream);
 
@@ -42,31 +42,4 @@ async fn generate_code_inner(input: &GenerateInput) -> Result<(), JsValue> {
     state.complete().await?;
     result_stream.end();
     Ok(())
-}
-
-#[wasm_bindgen(js_name = generateCode)]
-pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
-    console::log1(input);
-    return Ok(());
-    let defer_abort = Defer::new();
-    let defer_abort_clone = defer_abort.clone();
-    let abort_signal = input.abort_signal();
-    abort_signal.add_event_listener(
-        "abort",
-        closure_once!(|| {
-            defer_abort_clone.resolve(JsValue::null());
-        })
-        .into_js_value(),
-    );
-
-    let fut = generate_code_inner(input);
-
-    match select(defer_abort.into_future(), Box::pin(fut)).await {
-        Either::Left(_) => {
-            return Ok(());
-        }
-        Either::Right((res, _)) => {
-            return res;
-        }
-    }
 }

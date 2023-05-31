@@ -5,6 +5,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use futures::future::{select, Either};
+use futures::StreamExt;
 use js_sys::{Object as JsObject, Reflect};
 use wasm_bindgen::prelude::*;
 
@@ -79,11 +80,11 @@ impl HttpRequest {
     }
 
     /// Sets the request body.
-    pub fn set_body<T>(mut self, body: T) -> Self
+    pub fn set_body<T>(mut self, body: Option<T>) -> Self
     where
         T: AsRef<[u8]>,
     {
-        self.body = Some(body.as_ref().to_vec());
+        self.body = body.map(|b| b.as_ref().to_vec());
         self
     }
 
@@ -231,6 +232,15 @@ impl HttpResponse {
     /// Returns an [`AsyncIter<Buffer>`] for reading data of the body.
     pub fn body(&mut self) -> &mut AsyncIter<Buffer> {
         &mut self.data_stream
+    }
+
+    /// Returns the body as a string.
+    pub async fn text(&mut self) -> String {
+        self.body()
+            .map(|chunk| chunk.to_string("utf-8"))
+            .collect::<Vec<_>>()
+            .await
+            .join("")
     }
 }
 

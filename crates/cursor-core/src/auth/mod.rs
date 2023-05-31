@@ -2,6 +2,7 @@ pub mod token;
 
 use std::future::IntoFuture;
 
+use anyhow::anyhow;
 use base64::Engine;
 use futures::{
     future::{select, Either},
@@ -10,19 +11,22 @@ use futures::{
 use gloo::timers::future::IntervalStream;
 use node_bridge::{bindings::AbortSignal, futures::Defer, http_client::HttpMethod, prelude::*};
 use rand::RngCore;
+use serde::Deserialize;
+use serde_json::json;
 use sha2::Digest;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{future_to_promise, spawn_local};
 
 const AUTH_TOKEN_KEY: &str = "auth_token";
+const CLIENT_ID: &str = "KbZUR41cY7W6zRSdpSUJ7I7mLYBKOCmB";
 
 use crate::{
     bindings::{
         progress::Progress, progress_location::ProgressLocation, progress_options::ProgressOptions,
     },
     context::get_extension_context,
-    request::make_request_with_legacy,
+    request::{make_request, make_request_with_legacy, JsonSendable},
 };
 
 use self::token::Token;
@@ -139,37 +143,36 @@ async fn polling(
             }
             _ => {}
         }
-        let mut response = make_request_with_legacy(
+        let data = make_request_with_legacy(
             &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
             HttpMethod::Get,
         )
         .send()
-        .await?;
+        .await?
+        .text()
+        .await;
 
-        if let Some(chunk) = response.body().next().await {
-            let data = chunk.to_string("utf-8");
-            #[cfg(debug_assertions)]
-            console::log_str(&data);
-            match serde_json::from_str::<serde_json::Value>(&data).and_then(|value| {
-                if value.is_null() {
-                    Ok(false)
-                } else {
-                    serde_json::from_str::<Token>(&data).map(|_| true)
+        #[cfg(debug_assertions)]
+        console::log_str(&data);
+        match serde_json::from_str::<serde_json::Value>(&data).and_then(|value| {
+            if value.is_null() {
+                Ok(false)
+            } else {
+                serde_json::from_str::<Token>(&data).map(|_| true)
+            }
+        }) {
+            Ok(flag) => {
+                if !flag {
+                    continue;
                 }
-            }) {
-                Ok(flag) => {
-                    if !flag {
-                        continue;
-                    }
-                    return Ok(Some(data));
-                }
-                Err(err) => {
-                    let js_error = JsError::new(&err.to_string());
-                    let error = js_error.into();
-                    #[cfg(debug_assertions)]
-                    console::error1(&error);
-                    return Err(error);
-                }
+                return Ok(Some(data));
+            }
+            Err(err) => {
+                let js_error = JsError::new(&err.to_string());
+                let error = js_error.into();
+                #[cfg(debug_assertions)]
+                console::error1(&error);
+                return Err(error);
             }
         }
     }
@@ -184,6 +187,45 @@ pub fn sign_out() {
             .show_information_message("You have successfully logged out.", js_sys::Array::new())
             .await;
     });
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct RefreshResponse {
+    pub access_token: String,
+    pub expires_in: u64,
+    pub scope: String,
+    pub token_type: String,
+    pub id_token: String,
+}
+
+#[wasm_bindgen(js_name = refreshToken)]
+pub async fn refresh() -> Result<(), JsValue> {
+    if let Some(mut token) = account_token() {
+        let response = make_request("cursor.us.auth0.com", "/oauth/token", HttpMethod::Post)
+            .set_json_body(&json!({
+                "client_id": CLIENT_ID,
+                "grant_type": "refresh_token",
+                "refresh_token": token.refresh_token,
+            }))
+            .send()
+            .await?
+            .text()
+            .await;
+        #[cfg(debug_assertions)]
+        console::log_str(&format!("refresh token response: {}", response));
+        let access_token = serde_json::from_str::<RefreshResponse>(&response)
+            .map_err(|e| JsError::from(e))?
+            .access_token;
+        token.access_token = access_token;
+
+        let context = get_extension_context();
+        let storage = context.storage();
+        storage.update(
+            AUTH_TOKEN_KEY,
+            Some(&serde_json::to_string(&token).map_err(|e| JsError::from(e))?),
+        );
+    }
+    Ok(())
 }
 
 pub fn account_token() -> Option<Token> {

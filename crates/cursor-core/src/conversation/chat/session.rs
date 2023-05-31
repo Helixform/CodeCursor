@@ -68,10 +68,10 @@ impl Session {
         let mut data_stream = state.data_stream();
         let result_stream = input.result_stream();
         while let Some(data) = data_stream.next().await {
-            #[cfg(debug_assertions)]
-            console::log_str(&data);
-            result_stream.write(&data);
-            message.push_str(&data);
+            // #[cfg(debug_assertions)]
+            // console::log_str(&data);
+            // result_stream.write(&data);
+            // message.push_str(&data);
         }
         drop(data_stream);
 
