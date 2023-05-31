@@ -25,11 +25,11 @@ impl StreamResponseState {
         Self { response }
     }
 
-    pub fn data_stream(&mut self) -> Pin<Box<impl Stream<Item = FlaggedChunk> + '_>> {
-        Box::pin(self.response.body().filter_map(|chunk| async move {
+    pub fn data_stream(&mut self) -> impl Stream<Item = FlaggedChunk> + '_ {
+        self.response.body().filter_map(|chunk| async move {
             let bytes = Uint8Array::new(&chunk).to_vec();
             FlaggedChunk::decode(bytes).ok()
-        }))
+        })
     }
 
     pub async fn complete(self) -> Result<(), JsValue> {

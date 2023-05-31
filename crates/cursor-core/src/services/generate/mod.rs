@@ -1,5 +1,7 @@
 pub mod models;
 
+use std::pin::pin;
+
 use futures::StreamExt;
 use node_bridge::prelude::console;
 use serde::Deserialize;
@@ -46,30 +48,31 @@ impl CodeGenerateService {
         .await?;
 
         let result_stream = input.result_stream();
-        let mut data_stream = state.data_stream();
-        while let Some(chunk) = data_stream.next().await {
-            if chunk.is_end() {
-                break;
-            }
-            let data = chunk
-                .utf8_string()
-                .map_err(|e| JsError::new(&e.to_string()))?;
-            if data.is_empty() {
-                continue;
-            }
-            if let Ok(prompt) = serde_json::from_str::<FilledPrompt>(&data) {
-                #[cfg(debug_assertions)]
-                console::log_str(&format!("prompt: \n{}", prompt.text));
-                continue;
-            } else if let Ok(ChunkContent { text, .. }) =
-                serde_json::from_str::<ChunkContent>(&data)
-            {
-                #[cfg(debug_assertions)]
-                console::log_str(&format!("wrote: {}", text));
-                result_stream.write(&text);
+        {
+            let mut data_stream = pin!(state.data_stream());
+            while let Some(chunk) = data_stream.next().await {
+                if chunk.is_end() {
+                    break;
+                }
+                let data = chunk
+                    .utf8_string()
+                    .map_err(|e| JsError::new(&e.to_string()))?;
+                if data.is_empty() {
+                    continue;
+                }
+                if let Ok(prompt) = serde_json::from_str::<FilledPrompt>(&data) {
+                    #[cfg(debug_assertions)]
+                    console::log_str(&format!("prompt: \n{}", prompt.text));
+                    continue;
+                } else if let Ok(ChunkContent { text, .. }) =
+                    serde_json::from_str::<ChunkContent>(&data)
+                {
+                    #[cfg(debug_assertions)]
+                    console::log_str(&format!("wrote: {}", text));
+                    result_stream.write(&text);
+                }
             }
         }
-        drop(data_stream);
 
         // Make sure the response is fully received without errors.
         state.complete().await?;
