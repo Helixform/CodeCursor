@@ -7,7 +7,7 @@ import {
     useRef,
     useMemo,
 } from "react";
-import { VSCodeButton, VSCodeTextArea } from "@vscode/webview-ui-toolkit/react";
+import { VSCodeButton, VSCodeTextArea, VSCodePanels, VSCodePanelTab, VSCodePanelView } from "@vscode/webview-ui-toolkit/react";
 
 import "./style.css";
 import { MessageItem } from "./MessageItem";
@@ -142,27 +142,93 @@ export function ChatPage() {
                     return <MessageItem key={m.id} model={m} />;
                 })}
             </div>
-            <div className="chat-input-area">
-                <VSCodeTextArea
-                    style={{ width: "100%" }}
-                    rows={3}
-                    placeholder={`对 ${
-                        hasSelection ? "选中内容" : "整个文件"
-                    } 进行提问...`}
-                    disabled={!isReady}
-                    value={prompt}
-                    onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
-                        setPrompt(e.target.value);
-                    }}
-                    onKeyDown={confirmShortcut.keyDownHandler}
-                />
-                <VSCodeButton
-                    disabled={!isReady || prompt.length === 0}
-                    onClick={handleAskAction}
-                >
-                    {`提问 (${confirmShortcut.label})`}
-                </VSCodeButton>
-            </div>
+            
+            <VSCodePanels>
+                <VSCodePanelTab id="AI">AI对话</VSCodePanelTab>
+                <VSCodePanelTab id="search">代码库文档库搜索</VSCodePanelTab>
+                <VSCodePanelTab id="genVar">变量名</VSCodePanelTab>
+
+                <VSCodePanelView id="AI">
+                    <div className="chat-input-area">
+                        <VSCodeTextArea
+                            style={{ width: "100%" }}
+                            rows={3}
+                            placeholder={`Talk about the ${
+                                hasSelection ? "selected contents" : "whole document"
+                            }...`}
+                            disabled={!isReady}
+                            value={prompt}
+                            onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                setPrompt(e.target.value);
+                            }}
+                            onKeyDown={confirmShortcut.keyDownHandler}
+                        />
+                        <VSCodeButton
+                            disabled={!isReady || prompt.length === 0}
+                            onClick={handleAskAction}
+                        >
+                            {`提问 (${confirmShortcut.label})`}
+                        </VSCodeButton>
+
+                        {/* <VSCodeButton>   https://microsoft.github.io/vscode-codicons/dist/codicon.html
+                            <span className="codicon codicon-check"></span>
+                        </VSCodeButton> */}
+                        
+                    </div>
+                </VSCodePanelView>
+
+                <VSCodePanelView id="search">
+                    <div className="chat-input-area">
+                        <VSCodeTextArea
+                            style={{ width: "100%" }}
+                            rows={3}
+                            placeholder={`云雀研发云文档库、代码库进行搜索...`}
+                            disabled={!isReady}
+                            value={prompt}
+                            onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                setPrompt(e.target.value);
+                            }}
+                            onKeyDown={confirmShortcut.keyDownHandler}
+                        />
+                        <div style={{display:"flex", flexDirection:"row", justifyContent:"center", width:"100%"}}>
+                            <VSCodeButton
+                                disabled={!isReady || prompt.length === 0}
+                                onClick={handleAskAction}
+                            >
+                                {`代码库搜索`}
+                            </VSCodeButton>
+                            <VSCodeButton
+                                disabled={!isReady || prompt.length === 0}
+                                onClick={handleAskAction}
+                            >
+                                {`文档库搜索`}
+                            </VSCodeButton>                            
+                        </div>
+                    </div>
+                </VSCodePanelView>     
+
+                <VSCodePanelView id="genVar">
+                <div className="chat-input-area">
+                        <VSCodeTextArea
+                            style={{ width: "100%" }}
+                            rows={3}
+                            placeholder={`请输入要生成的变量名提示语`}
+                            disabled={!isReady}
+                            value={prompt}
+                            onInput={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                                setPrompt(e.target.value);
+                            }}
+                            onKeyDown={confirmShortcut.keyDownHandler}
+                        />
+                        <VSCodeButton
+                            disabled={!isReady || prompt.length === 0}
+                            onClick={handleAskAction}
+                        >
+                            {`生成变量名`}
+                        </VSCodeButton>
+                    </div>
+                </VSCodePanelView>                                
+            </VSCodePanels>
         </div>
     );
 }
