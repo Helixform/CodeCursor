@@ -2,8 +2,7 @@ use serde::Serialize;
 
 use super::code_chunk::CodeChunk;
 
-#[derive(Debug, Clone, Serialize)]
-pub struct Conversation(Vec<ConversationMessage>);
+pub type Conversation = Vec<ConversationMessage>;
 
 #[derive(Debug, Clone)]
 pub enum MessageType {
@@ -39,4 +38,14 @@ pub struct ConversationMessage {
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub attached_code_chunks: Vec<CodeChunk>,
+}
+
+impl ConversationMessage {
+    pub fn new(message_type: MessageType, text: String) -> Self {
+        Self {
+            message_type,
+            text,
+            attached_code_chunks: vec![],
+        }
+    }
 }

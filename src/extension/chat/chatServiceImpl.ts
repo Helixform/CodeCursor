@@ -107,6 +107,7 @@ export class ChatServiceImpl implements IChatService {
 
         const { document, selection } = editor;
         const selectionRange = new SelectionRange(selection);
+        debugger;
 
         this.#addMessage({
             id: "",

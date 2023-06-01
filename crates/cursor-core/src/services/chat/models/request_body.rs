@@ -8,6 +8,11 @@ use crate::{
     GenerateInput,
 };
 
+use super::{
+    code_chunk::CodeChunk,
+    conversation::{Conversation, ConversationMessage, MessageType},
+};
+
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestBody {
@@ -24,10 +29,21 @@ pub struct RequestBody {
     pub context: ExplicitContext,
 
     pub request_id: String,
+    pub conversation: Conversation,
 }
 
 impl RequestBody {
     pub fn new_with_input(input: &GenerateInput) -> Self {
+        let mut message = ConversationMessage::new(MessageType::Human, input.prompt());
+        message.attached_code_chunks.push(CodeChunk {
+            relative_workspace_path: input.file_path(),
+            start_line: input.selection_range().start().line(),
+            lines: input
+                .document_text()
+                .lines()
+                .map(|s| s.to_string())
+                .collect(),
+        });
         Self {
             current_file: CurrentFile {
                 content: input.document_text(),
@@ -44,6 +60,7 @@ impl RequestBody {
             api_key: input.api_key(),
             context: ExplicitContext,
             request_id: Uuid::new_v4().to_string(),
+            conversation: vec![message],
         }
     }
 }
