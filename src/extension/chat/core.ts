@@ -12,6 +12,7 @@ let isProcessing = false;
 
 export async function chat(
     prompt: string,
+    msgType: string,
     document: vscode.TextDocument,
     selectionRange: SelectionRange,
     abortSignal: AbortSignal,
@@ -32,6 +33,7 @@ export async function chat(
         isProcessing = true;
         await rustChat({
             prompt,
+            msgType,
             documentText,
             filePath,
             workspaceDirectory,

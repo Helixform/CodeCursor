@@ -20,6 +20,24 @@
     border-top: 1px solid var(--vscode-notebook-cellToolbarSeparator);
 }
 
+.chat-input-area-ai {
+    width: 75%;
+}
+
+.chat-icon-area {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    width: 25%;
+    padding: 12px 0px;
+    border-top: 1px solid var(--vscode-notebook-cellToolbarSeparator);
+}
+
+.chat-icon {
+    margin-bottom: 15px;
+    flex-basis: calc(33.33% - 10px);
+}
+
 .chat-msg {
     display: flow-root;
     position: relative;
@@ -106,7 +124,9 @@
 }
 
 .chat-msg-block-toolbar {
-    display: inline-flex;
+    /* display: inline-flex; */
+    display: flex;
+    justify-content: flex-end;
     width: auto;
     margin-bottom: 6px;
     column-gap: 4px;

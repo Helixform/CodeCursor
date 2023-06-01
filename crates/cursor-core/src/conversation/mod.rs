@@ -16,7 +16,7 @@ use crate::{
 
 use self::models::RequestBody;
 
-const SIGN_IN_ITEM: &str = "Sign In / Sign Up";
+// const SIGN_IN_ITEM: &str = "Sign In / Sign Up";
 const CONFIGURE_API_KEY_ITEM: &str = "Configure API Key";
 
 async fn send_conversation_request(
@@ -33,8 +33,8 @@ async fn send_conversation_request(
                 let context = get_extension_context();
                 match context
                     .show_information_message(
-                        "You have to sign in / sign up or configure API key to use Cursor AI features",
-                        vec![SIGN_IN_ITEM, CONFIGURE_API_KEY_ITEM]
+                        "You have to configure API key to use Cursor AI features",
+                        vec![CONFIGURE_API_KEY_ITEM]
                             .into_iter()
                             .map(JsValue::from)
                             .collect(),
@@ -46,11 +46,7 @@ async fn send_conversation_request(
                         context
                             .execute_command0(&format!(
                                 "whalecloud.{}",
-                                if pick == SIGN_IN_ITEM {
-                                    "signInUp"
-                                } else {
-                                    "configureApiKey"
-                                }
+                                "configureApiKey"
                             ))
                             .await;
                     }

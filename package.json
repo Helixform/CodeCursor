@@ -158,10 +158,9 @@
         "configuration": {
             "title": "浩鲸智能编程助手",
             "properties": {
-                "whalecloud.openaiApiKey": {
+                "whalecloud.devCloudAccessToken": {
                     "type": "string",
-                    "default": "",
-                    "description": "ZCM Key"
+                    "default": ""
                 },
                 "whalecloud.model": {
                     "type": "string",
@@ -187,8 +186,8 @@
         "compile-webview:dev": "webpack -c ./webpack.webview.config.js",
         "compile-rust": "cd crates/cursor-core && wasm-pack build --target nodejs --weak-refs",
         "compile-rust:dev": "cd crates/cursor-core && wasm-pack build --target nodejs --weak-refs --dev",
-        "copy-icons": "cp src/webview/codicons/* dist/",
-        "copy-rust": "cp crates/cursor-core/pkg/cursor_core_bg.wasm dist/cursor_core_bg.wasm",
+        "copy-icons": "xcopy src\\webview\\codicons\\* dist\\ /s/e/y",
+        "copy-rust": "xcopy crates\\cursor-core\\pkg\\cursor_core_bg.wasm dist\\cursor_core_bg.wasm /s/e/y",
         "copy-resources": "npm run copy-rust && npm run copy-icons",
         "watch": "webpack --watch",
         "package:no-rust": "npm run compile-webview:dev && npm run compile:dev && npm run copy-resources",

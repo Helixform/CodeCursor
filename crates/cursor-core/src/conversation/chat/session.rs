@@ -18,7 +18,15 @@ pub struct Session {
 
 impl Session {
     fn body_with_input(&mut self, input: &GenerateInput) -> &RequestBody {
-        let message_type = MessageType::Freeform;
+        let str_msg_type = input.msg_type();
+        let message_type = match str_msg_type.as_str() {
+            "Freeform" => MessageType::Freeform,
+            "Edit" => MessageType::Edit,
+            "Custom" => MessageType::Custom,
+            "Generate" => MessageType::Generate,
+            "GenVar" => MessageType::GenVar,
+            _ => MessageType::Custom,
+        };
 
         self.request_body = Some(
             self.request_body

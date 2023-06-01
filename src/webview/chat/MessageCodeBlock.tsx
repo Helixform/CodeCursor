@@ -47,6 +47,7 @@ export function MessageCodeBlock(props: MessageCodeBlockProps) {
                 useInlineStyles={false}
                 codeTagProps={{ style: {} }}
                 language={language}
+                customStyle={{ background:"#1a1b26", color: "#cbd2ea" }}
             >
                 {contents}
             </SyntaxHighlighter>

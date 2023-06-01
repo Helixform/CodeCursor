@@ -10,6 +10,8 @@ pub enum MessageType {
     Edit,
     Generate,
     Freeform,
+    Custom,
+    GenVar,
 }
 
 #[derive(Debug, Serialize, Clone)]

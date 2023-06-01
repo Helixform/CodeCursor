@@ -88,7 +88,7 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand("whalecloud.configureApiKey", () => {
             vscode.commands.executeCommand(
                 "workbench.action.openSettings",
-                "whalecloud.openaiApiKey"
+                "whalecloud.devCloudAccessToken"
             );
         }),
         vscode.commands.registerCommand("whalecloud.generateProject", () => {

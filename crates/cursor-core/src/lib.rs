@@ -29,6 +29,7 @@ interface IResultStream {
 const IGENERATE_INPUT: &'static str = r#"
 interface IGenerateInput {
     get prompt(): string;
+    get msgType(): string;    
     get documentText(): string;
     get filePath(): string;
     get workspaceDirectory(): string | null;
@@ -77,6 +78,9 @@ extern "C" {
 
     #[wasm_bindgen(method, getter, structural)]
     pub fn prompt(this: &GenerateInput) -> String;
+
+    #[wasm_bindgen(method, getter, structural, js_name = msgType)]
+    pub fn msg_type(this: &GenerateInput) -> String;
 
     #[wasm_bindgen(method, getter, structural, js_name = documentText)]
     pub fn document_text(this: &GenerateInput) -> String;

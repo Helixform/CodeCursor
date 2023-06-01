@@ -90,7 +90,7 @@ export class ChatServiceImpl implements IChatService {
         }
     }
 
-    async confirmPrompt(prompt: string): Promise<void> {
+    async confirmPrompt(prompt: string, msgType: string): Promise<void> {
         if (this.#currentAbortController) {
             // TODO: optimize the UX.
             console.warn("A chat session is in-flight");
@@ -151,6 +151,7 @@ export class ChatServiceImpl implements IChatService {
                 try {
                     await chat(
                         prompt,
+                        msgType,                        
                         document,
                         selectionRange,
                         abortController.signal,

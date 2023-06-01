@@ -90,13 +90,33 @@ export function ChatPage() {
         setMessages([]);
     }, []);
 
+
     const handleAskAction = useCallback(async () => {
         const chatService = await getServiceManager().getService<IChatService>(
             CHAT_SERVICE_NAME
         );
-        await chatService.confirmPrompt(prompt);
+        await chatService.confirmPrompt(prompt, "Freeform");
         setPrompt("");
     }, [prompt, setPrompt, setMessages]);
+
+
+    const handleCustom = useCallback(async () => {
+        const chatService = await getServiceManager().getService<IChatService>(
+            CHAT_SERVICE_NAME
+        );   
+        const strPrompt = `你是一个中文助手，请用中文回答我所有问题。 Can you add tests for this code? ${prompt}`
+        await chatService.confirmPrompt(strPrompt, "Custom");
+        setPrompt("");            
+    }, [prompt, setPrompt, setMessages]);
+
+    const handleGenVarAction = useCallback(async () => {
+        const chatService = await getServiceManager().getService<IChatService>(
+            CHAT_SERVICE_NAME
+        );   
+        await chatService.confirmPrompt(prompt, "GenVar");
+        setPrompt("");          
+    }, [prompt, setPrompt, setMessages]);
+    
 
     const confirmShortcut = useConfirmShortcut(handleAskAction);
 
@@ -149,11 +169,11 @@ export function ChatPage() {
                 <VSCodePanelTab id="genVar">变量名</VSCodePanelTab>
 
                 <VSCodePanelView id="AI">
-                    <div className="chat-input-area">
+                    <div className="chat-input-area chat-input-area-ai">
                         <VSCodeTextArea
                             style={{ width: "100%" }}
                             rows={3}
-                            placeholder={`Talk about the ${
+                            placeholder={`bout the ${
                                 hasSelection ? "selected contents" : "whole document"
                             }...`}
                             disabled={!isReady}
@@ -169,11 +189,35 @@ export function ChatPage() {
                         >
                             {`提问 (${confirmShortcut.label})`}
                         </VSCodeButton>
-
-                        {/* <VSCodeButton>   https://microsoft.github.io/vscode-codicons/dist/codicon.html
+                    </div>
+                    <div className="chat-icon-area">
+                        <VSCodeButton className="chat-icon" title="check" onClick={handleCustom}>
                             <span className="codicon codicon-check"></span>
-                        </VSCodeButton> */}
-                        
+                        </VSCodeButton>
+                        <VSCodeButton className="chat-icon" title="account" onClick={handleCustom}>
+                            <span className="codicon codicon-account"></span>
+                        </VSCodeButton>
+                        <VSCodeButton className="chat-icon" title="activate-breakpoints" onClick={handleCustom}>
+                            <span className="codicon codicon-activate-breakpoints"></span>
+                        </VSCodeButton>
+                        <VSCodeButton className="chat-icon" title="add" onClick={handleCustom}>
+                            <span className="codicon codicon-add"></span>
+                        </VSCodeButton>
+                        <VSCodeButton className="chat-icon" title="archive" onClick={handleCustom}>
+                            <span className="codicon codicon-archive"></span>
+                        </VSCodeButton>
+                        <VSCodeButton className="chat-icon" title="debug" onClick={handleCustom}>
+                            <span className="codicon codicon-debug"></span>
+                        </VSCodeButton>
+                        <VSCodeButton className="chat-icon" title="color-mode" onClick={handleCustom}>
+                            <span className="codicon codicon-color-mode"></span>
+                        </VSCodeButton>
+                        <VSCodeButton className="chat-icon" title="github-inverted" onClick={handleCustom}>
+                            <span className="codicon codicon-github-inverted"></span>
+                        </VSCodeButton>
+                        <VSCodeButton className="chat-icon" title="heart" onClick={handleCustom}>
+                            <span className="codicon codicon-heart"></span>
+                        </VSCodeButton>
                     </div>
                 </VSCodePanelView>
 
@@ -190,18 +234,18 @@ export function ChatPage() {
                             }}
                             onKeyDown={confirmShortcut.keyDownHandler}
                         />
-                        <div style={{display:"flex", flexDirection:"row", justifyContent:"center", width:"100%"}}>
+                        <div style={{display:"flex", flexDirection:"row", justifyContent:"flex-end", gap:"20px" ,width:"100%"}}>
                             <VSCodeButton
                                 disabled={!isReady || prompt.length === 0}
                                 onClick={handleAskAction}
                             >
-                                {`代码库搜索`}
+                                {'代码库搜索'}
                             </VSCodeButton>
                             <VSCodeButton
                                 disabled={!isReady || prompt.length === 0}
                                 onClick={handleAskAction}
                             >
-                                {`文档库搜索`}
+                                {'文档库搜索'}
                             </VSCodeButton>                            
                         </div>
                     </div>
@@ -222,7 +266,7 @@ export function ChatPage() {
                         />
                         <VSCodeButton
                             disabled={!isReady || prompt.length === 0}
-                            onClick={handleAskAction}
+                            onClick={handleGenVarAction}
                         >
                             {`生成变量名`}
                         </VSCodeButton>

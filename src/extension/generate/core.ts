@@ -44,9 +44,10 @@ export async function generateCode(
     const { signal: abortSignal } = abortController;
 
     const customModelConfig = getCustomModelConfiguration();
-
+    const msgType = "Generate";
     await rustGenerateCode({
         prompt,
+        msgType,
         documentText,
         filePath,
         workspaceDirectory,
