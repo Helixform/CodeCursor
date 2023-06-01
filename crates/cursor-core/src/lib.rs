@@ -63,6 +63,14 @@ extern "C" {
     pub fn end(this: &SelectionRange) -> Position;
 }
 
+impl SelectionRange {
+    pub fn is_empty(&self) -> bool {
+        let start = self.start();
+        let end = self.end();
+        start.line() == end.line() && start.character() == end.character()
+    }
+}
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "IPosition")]

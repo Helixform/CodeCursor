@@ -2,7 +2,6 @@ pub mod token;
 
 use std::future::IntoFuture;
 
-use anyhow::anyhow;
 use base64::Engine;
 use futures::{
     future::{select, Either},

@@ -1,22 +1,16 @@
 use serde::Serialize;
+use uuid::Uuid;
 
-use crate::GenerateInput;
-
-use super::current_file::CurrentFile;
-
-#[derive(Debug, Clone, Copy, Serialize)]
-pub struct ExplicitContext;
-
-#[derive(Debug, Clone, Serialize)]
-pub struct ModelDetails {
-    #[serde(rename = "modelName")]
-    pub name: String,
-}
+use crate::{
+    services::stream::models::{
+        current_file::CurrentFile, explicit_context::ExplicitContext, model_details::ModelDetails,
+    },
+    GenerateInput,
+};
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RequestBody {
-    pub query: String,
     pub current_file: CurrentFile,
     pub model_details: ModelDetails,
 
@@ -28,12 +22,13 @@ pub struct RequestBody {
 
     #[serde(rename = "explicitContext")]
     pub context: ExplicitContext,
+
+    pub request_id: String,
 }
 
 impl RequestBody {
     pub fn new_with_input(input: &GenerateInput) -> Self {
         Self {
-            query: input.prompt(),
             current_file: CurrentFile {
                 content: input.document_text(),
                 language_id: input.language_id(),
@@ -43,10 +38,12 @@ impl RequestBody {
             },
             model_details: ModelDetails {
                 name: input.gpt_model(),
+                ghost_mode: true,
             },
             root_path: input.workspace_directory().unwrap_or_default(),
             api_key: input.api_key(),
             context: ExplicitContext,
+            request_id: Uuid::new_v4().to_string(),
         }
     }
 }

@@ -1,3 +1,4 @@
+pub mod chat;
 mod flagged_chunk;
 pub mod generate;
 mod stream;
@@ -10,7 +11,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::GenerateInput;
 
-use self::generate::{CodeGenerateMode, CodeGenerateService};
+use self::generate::CodeGenerateService;
 
 #[wasm_bindgen(js_name = generateCode)]
 pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
@@ -25,8 +26,7 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
         .into_js_value(),
     );
 
-    let service = CodeGenerateService::new(CodeGenerateMode::Generate);
-    let fut = service.generate(input);
+    let fut = CodeGenerateService::generate(input);
 
     let x = match select(defer_abort.into_future(), Box::pin(fut)).await {
         Either::Left(_) => Ok(()),

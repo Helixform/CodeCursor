@@ -1,3 +1,4 @@
+mod models;
 mod session;
 
 use std::cell::RefCell;

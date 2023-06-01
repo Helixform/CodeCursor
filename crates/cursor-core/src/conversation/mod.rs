@@ -1,5 +1,3 @@
-pub mod chat;
-pub mod generate;
 pub mod models;
 
 use wasm_bindgen::{JsError, JsValue};

@@ -1,4 +1,4 @@
-pub mod models;
+mod request_body;
 
 use std::pin::pin;
 
@@ -9,20 +9,12 @@ use wasm_bindgen::{JsError, JsValue};
 
 use crate::GenerateInput;
 
-use self::models::request_body::RequestBody;
+use self::request_body::RequestBody;
 
 use super::stream::make_stream;
 
-#[derive(Debug, Clone, Copy)]
-pub enum CodeGenerateMode {
-    Generate,
-    Edit,
-}
-
 #[derive(Debug, Clone)]
-pub struct CodeGenerateService {
-    mode: CodeGenerateMode,
-}
+pub struct CodeGenerateService;
 
 #[derive(Debug, Clone, Deserialize)]
 struct FilledPrompt {
@@ -36,13 +28,16 @@ struct ChunkContent {
 }
 
 impl CodeGenerateService {
-    pub fn new(mode: CodeGenerateMode) -> Self {
-        Self { mode }
-    }
-
-    pub async fn generate(&self, input: &GenerateInput) -> Result<(), JsValue> {
+    pub async fn generate(input: &GenerateInput) -> Result<(), JsValue> {
         let mut state = make_stream(
-            "/aiserver.v1.AiService/StreamGenerate",
+            &format!(
+                "/aiserver.v1.AiService/Stream{}",
+                if input.selection_range().is_empty() {
+                    "Generate"
+                } else {
+                    "Edit"
+                }
+            ),
             &RequestBody::new_with_input(input),
         )
         .await?;

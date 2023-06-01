@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::{Position as IPosition, SelectionRange};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Selection {
     #[serde(rename = "startPosition")]
     pub start: Position,
@@ -19,7 +19,7 @@ impl From<SelectionRange> for Selection {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct Position {
     #[serde(skip_serializing_if = "column_is_zero")]
     pub line: usize,
