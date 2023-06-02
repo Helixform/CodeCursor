@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { ResultStream } from "../generate/resultStream";
-import { SelectionRange } from "../generate/core";
+import { Position, SelectionRange } from "../generate/core";
 import { getModelConfiguration } from "../utils";
 import {
     chat as rustChat,
@@ -13,7 +13,7 @@ let isProcessing = false;
 export async function chat(
     prompt: string,
     document: vscode.TextDocument,
-    selectionRange: SelectionRange,
+    selection: vscode.Selection,
     abortSignal: AbortSignal,
     resultStream: ResultStream<String>
 ): Promise<void> {
@@ -35,12 +35,15 @@ export async function chat(
             documentText,
             filePath,
             workspaceDirectory,
-            selectionRange,
+            selectionRange: new SelectionRange(selection),
             resultStream,
             abortSignal,
             apiKey: customModelConfig.openaiAPIKey ?? null,
             gptModel: customModelConfig.model,
-            cursor: null as any,
+            cursor: new Position(
+                selection.active.line,
+                selection.active.character
+            ),
             languageId: document.languageId,
         });
     } finally {

@@ -106,8 +106,6 @@ export class ChatServiceImpl implements IChatService {
         }
 
         const { document, selection } = editor;
-        const selectionRange = new SelectionRange(selection);
-        debugger;
 
         this.#addMessage({
             id: "",
@@ -147,7 +145,7 @@ export class ChatServiceImpl implements IChatService {
                     await chat(
                         prompt,
                         document,
-                        selectionRange,
+                        selection,
                         abortController.signal,
                         resultStream
                     );
