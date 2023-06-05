@@ -34,7 +34,7 @@ pub struct RequestBody {
 
 impl RequestBody {
     pub fn new_with_input(input: &GenerateInput) -> Self {
-        let mut message = ConversationMessage::new(MessageType::Human, input.prompt());
+        let mut message = ConversationMessage::new(MessageType::User, input.prompt());
         message.attached_code_chunks.push(CodeChunk {
             relative_workspace_path: input.file_path(),
             start_line: input.selection_range().start().line(),
@@ -58,7 +58,7 @@ impl RequestBody {
             },
             root_path: input.workspace_directory().unwrap_or_default(),
             api_key: input.api_key(),
-            context: ExplicitContext,
+            context: ExplicitContext {},
             request_id: Uuid::new_v4().to_string(),
             conversation: vec![message],
         }

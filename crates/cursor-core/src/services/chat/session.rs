@@ -18,7 +18,16 @@ pub struct Session {
 
 impl Session {
     fn body_with_input(&mut self, input: &GenerateInput) -> &RequestBody {
-        self.request_body = Some(RequestBody::new_with_input(input));
+        self.request_body = Some(
+            self.request_body
+                .take()
+                .map(|mut r| {
+                    r.conversation
+                        .push(ConversationMessage::new(MessageType::User, input.prompt()));
+                    r
+                })
+                .unwrap_or_else(|| RequestBody::new_with_input(input)),
+        );
         self.request_body.as_ref().unwrap()
     }
 
@@ -30,11 +39,16 @@ impl Session {
     }
 
     fn push_bot_message(&mut self, message: String) {
-        self.push_message(MessageType::Bot, message);
+        self.request_body.as_mut().map(|r| {
+            r.conversation.last_mut().map(|m| match m.message_type {
+                MessageType::Bot => m.text = message,
+                _ => {}
+            })
+        });
     }
 
     fn push_user_message(&mut self, message: String) {
-        self.push_message(MessageType::Human, message);
+        self.push_message(MessageType::User, message);
     }
 }
 
@@ -45,8 +59,12 @@ impl Session {
 
     pub async fn send_message(&mut self, input: &GenerateInput) -> Result<(), JsValue> {
         let request_body = self.body_with_input(input);
+        // Add an empty bot message to the conversation.
+        // self.push_message(MessageType::Bot, "".to_owned());
+
         #[cfg(debug_assertions)]
-        console::log_str(&serde_json::to_string(&request_body).unwrap());
+        console::log_str(&serde_json::to_string(request_body).unwrap());
+
         let mut state = make_stream("/aiserver.v1.AiService/StreamChat", request_body).await?;
         let result_stream = input.result_stream();
 
@@ -65,8 +83,8 @@ impl Session {
                 }
                 #[cfg(debug_assertions)]
                 console::log_str(&data);
-                // result_stream.write(&data);
-                // message.push_str(&data);
+                result_stream.write(&data);
+                message.push_str(&data);
             }
         }
 

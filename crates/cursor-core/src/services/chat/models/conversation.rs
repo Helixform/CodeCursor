@@ -6,7 +6,7 @@ pub type Conversation = Vec<ConversationMessage>;
 
 #[derive(Debug, Clone)]
 pub enum MessageType {
-    Human,
+    User,
     Bot,
 }
 
@@ -22,7 +22,7 @@ impl Serialize for MessageType {
 impl ToString for MessageType {
     fn to_string(&self) -> String {
         match self {
-            MessageType::Human => "MESSAGE_TYPE_HUMAN".to_owned(),
+            MessageType::User => "MESSAGE_TYPE_HUMAN".to_owned(),
             MessageType::Bot => "MESSAGE_TYPE_AI".to_owned(),
         }
     }
@@ -34,6 +34,7 @@ pub struct ConversationMessage {
     #[serde(rename = "type")]
     pub message_type: MessageType,
 
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub text: String,
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -47,5 +48,9 @@ impl ConversationMessage {
             text,
             attached_code_chunks: vec![],
         }
+    }
+
+    pub fn empty_message(msg_type: MessageType) -> Self {
+        Self::new(msg_type, "".to_owned())
     }
 }

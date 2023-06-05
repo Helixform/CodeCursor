@@ -41,7 +41,7 @@ impl RequestBody {
             },
             root_path: input.workspace_directory().unwrap_or_default(),
             api_key: input.api_key(),
-            context: ExplicitContext,
+            context: ExplicitContext {},
         }
     }
 }
