@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 
 import { ResultStream } from "../generate/resultStream";
 import { SelectionRange } from "../generate/core";
-import { getCustomModelConfiguration } from "../utils";
+import { getCustomModelConfiguration, getOutputChannel } from "../utils";
 import {
     chat as rustChat,
     resetChat as rustResetChat,
@@ -41,7 +41,13 @@ export async function chat(
             apiKey: customModelConfig?.openaiAPIKey || null,
             gptModel: customModelConfig?.model || null,
         });
-    } finally {
+    } catch(err) {
+        console.log("error when chat: ", err);
+        const channel = getOutputChannel();
+        channel.appendLine("error when chat: " + err);
+        channel.show(true);
+    }
+    finally {
         isProcessing = false;
     }
 }

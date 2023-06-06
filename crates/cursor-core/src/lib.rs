@@ -14,6 +14,10 @@ const ISELECTION_RANGE: &'static str = r#"
 interface ISelectionRange {
     get offset(): number;
     get length(): number;
+    get startLine(): number;
+    get startColumn(): number;
+    get endLine(): number;
+    get endColumn(): number;
 }
 "#;
 
@@ -50,6 +54,18 @@ extern "C" {
 
     #[wasm_bindgen(method, getter, structural)]
     pub fn length(this: &SelectionRange) -> usize;
+
+    #[wasm_bindgen(method, getter, structural, js_name = startLine)]
+    pub fn start_line(this: &SelectionRange) -> usize;
+
+    #[wasm_bindgen(method, getter, structural, js_name = startColumn)]
+    pub fn start_column(this: &SelectionRange) -> usize;
+
+    #[wasm_bindgen(method, getter, structural, js_name = endLine)]
+    pub fn end_line(this: &SelectionRange) -> usize;
+
+    #[wasm_bindgen(method, getter, structural, js_name = endColumn)]
+    pub fn end_column(this: &SelectionRange) -> usize;
 }
 
 impl SelectionRange {

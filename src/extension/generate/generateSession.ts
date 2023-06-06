@@ -24,7 +24,11 @@ export class GenerateSession {
         const selectionEndOffset = document.offsetAt(selection.end);
         const selectionRange = new SelectionRange(
             selectionStartOffset,
-            selectionEndOffset - selectionStartOffset
+            selectionEndOffset - selectionStartOffset,
+            selection.start.line,
+            selection.start.character,
+            selection.end.line,
+            selection.end.character
         );
 
         this.#prompt = prompt;

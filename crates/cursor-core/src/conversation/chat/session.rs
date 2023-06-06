@@ -1,11 +1,14 @@
+use std::result;
+
 use futures::StreamExt;
 use node_bridge::prelude::*;
 use wasm_bindgen::JsValue;
+use regex::Regex;
 
 use crate::{
     conversation::{
-        models::{user_message::UserMessage, BotMessage, MessageType, RequestBody, UserRequest},
-        send_conversation_request,
+        models::{user_message::UserMessage, BotMessage, MessageType, RequestBody, ConversationRequestBody, UserRequest},
+        send_http2_conversation_request,
     },
     GenerateInput,
 };
@@ -30,6 +33,10 @@ impl Session {
                 .unwrap_or_else(|| RequestBody::new_with_input(input, message_type)),
         );
         self.request_body.as_ref().unwrap()
+    }
+
+    fn conversation_body_with_input(&mut self, input: &GenerateInput) -> ConversationRequestBody {
+        input.into()
     }
 
     fn push_bot_message(&mut self, message: String) {
@@ -58,10 +65,11 @@ impl Session {
     }
 
     pub async fn send_message(&mut self, input: &GenerateInput) -> Result<(), JsValue> {
-        let request_body = self.body_with_input(input);
+        let request_body = self.conversation_body_with_input(input);
         #[cfg(debug_assertions)]
         console::log_str(&serde_json::to_string(&request_body).unwrap());
-        let mut state = send_conversation_request("/conversation", request_body).await?;
+
+        let mut state = send_http2_conversation_request(&request_body).await?;
 
         let mut message: String = "".to_owned();
 
@@ -70,17 +78,36 @@ impl Session {
         while let Some(data) = data_stream.next().await {
             #[cfg(debug_assertions)]
             console::log_str(&data);
-            result_stream.write(&data);
             message.push_str(&data);
         }
         drop(data_stream);
 
         state.complete().await?;
 
+        self.push_user_message(input.prompt());
+
+        #[cfg(debug_assertions)]
+        console::log_str(&format!("raw message: {}", message));
+
+        let re = Regex::new(r#"\{"text":"((?s).*?)"\}"#).unwrap();
+        
+        let mut resolved_messages = Vec::<&str>::new(); 
+        for value in re.captures_iter(&message) {
+            let v = value.get(1).unwrap().as_str();
+
+            #[cfg(debug_assertions)]
+            console::log_str(&format!("matched message: {}", v));
+
+            result_stream.write( &v.replace("\\n", "\n").replace(r#"\""#, "\""));
+           
+            //result_stream.write(v);
+            resolved_messages.push(v);
+        }
+
         result_stream.end();
 
-        self.push_user_message(input.prompt());
-        self.push_bot_message(message);
+        let resolved_message = resolved_messages.join("").to_string();
+        self.push_bot_message(resolved_message);
 
         Ok(())
     }
