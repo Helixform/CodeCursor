@@ -45,3 +45,12 @@ export function getCustomModelConfiguration(): CustomModelConfiguration | null {
         model,
     };
 }
+
+let channel: vscode.OutputChannel;
+
+export function getOutputChannel(): vscode.OutputChannel {
+    if (!channel) {
+        channel = vscode.window.createOutputChannel("CodeCursor");
+    }
+    return channel;
+}

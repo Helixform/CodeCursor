@@ -1,13 +1,15 @@
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::fmt::{self, Debug};
 use std::future::{Future, IntoFuture};
 use std::pin::Pin;
+use std::sync::{Arc, Weak};
 use std::task::{Context, Poll};
 
 use futures::future::{select, Either};
 use js_sys::{Object as JsObject, Reflect};
 use wasm_bindgen::prelude::*;
 
+use crate::bindings::http2::{self, ClientHttp2Stream};
 use crate::bindings::https::*;
 use crate::futures::{AsyncIter, Defer};
 use crate::prelude::*;
@@ -52,6 +54,7 @@ pub struct HttpRequest {
     method: HttpMethod,
     headers: HashMap<String, String>,
     body: Option<String>,
+    body_bytes: Option<Vec<u8>>,
 }
 
 impl HttpRequest {
@@ -62,6 +65,7 @@ impl HttpRequest {
             method: HttpMethod::Get,
             headers: HashMap::new(),
             body: None,
+            body_bytes: None,
         }
     }
 
@@ -81,6 +85,12 @@ impl HttpRequest {
     /// Sets the body string.
     pub fn set_body(mut self, body: String) -> Self {
         self.body = Some(body);
+        self
+    }
+
+    /// Sets the body bytes
+    pub fn set_body_bytes(mut self, bytes: Vec<u8>) -> Self {
+        self.body_bytes = Some(bytes);
         self
     }
 
@@ -150,6 +160,30 @@ impl HttpRequest {
         console::log2(&"response received: ".into(), &resp);
 
         Ok(HttpResponse::new(resp))
+    }
+
+    pub async fn send_as_http2(self) -> Result<Http2Response, JsValue> {
+        let client = http2::connect(&self.url);
+
+        let headers = JsObject::new();
+        for (header_field_name, header_field_value) in &self.headers {
+            Reflect::set(
+                &headers,
+                &header_field_name.into(),
+                &header_field_value.into(),
+            )?;
+        }
+        #[cfg(debug_assertions)]
+        console::log2(&"request headers: {}".into(), &headers);
+
+        let req = client.request(headers.into());
+
+        if let Some(body_bytes) = self.body_bytes {
+            req.write(Buffer::from_array(body_bytes));
+            req.end();
+        }
+
+        Ok(Http2Response::new(req))
     }
 }
 
@@ -241,6 +275,120 @@ impl Drop for HttpResponse {
 }
 
 impl Future for HttpResponse {
+    type Output = Result<(), JsValue>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let fut = self.fut.as_mut();
+        fut.poll(cx)
+    }
+}
+
+pub struct Http2Response {
+    fut: Pin<Box<dyn Future<Output = Result<(), JsValue>>>>,
+    data_stream: AsyncIter<Vec<u8>>,
+    resp: ClientHttp2Stream,
+}
+
+impl Http2Response {
+    fn new(resp: ClientHttp2Stream) -> Self {
+        let resp = Arc::new(resp);
+
+        let data_stream = AsyncIter::new();
+        let mut data_stream_sender = data_stream.sender();
+
+        resp.on(
+            "data",
+            closure!(|chunk: Vec<u8>| {
+                #[cfg(debug_assertions)]
+                console::log_str("chunk received");
+                data_stream_sender.send(Some(chunk));
+            })
+            .into_js_value(),
+        );
+
+        let mut data_stream_sender_for_end = data_stream.sender();
+        let defer_end = Defer::new();
+        let defer_end_clone = defer_end.clone();
+        let resp_clone = Arc::downgrade(&resp);
+
+        resp.on(
+            "end",
+            closure_once!(|| {
+                #[cfg(debug_assertions)]
+                console::log_str("response ended");
+                data_stream_sender_for_end.send(None);
+                defer_end_clone.resolve(JsValue::UNDEFINED);
+                Self::need_extra_close(resp_clone);
+            })
+            .into_js_value(),
+        );
+
+        let mut data_stream_sender_for_error = data_stream.sender();
+        let defer_err = Defer::new();
+        let defer_err_clone = defer_err.clone();
+        let resp_clone = Arc::downgrade(&resp);
+
+        resp.on(
+            "error",
+            closure_once!(|err: JsValue| {
+                console::error1(&err);
+                data_stream_sender_for_error.send(None);
+                defer_err_clone.resolve(err);
+                Self::need_extra_close(resp_clone);
+            })
+            .into_js_value(),
+        );
+
+        let fut = async move {
+            match select(defer_end.into_future(), defer_err.into_future()).await {
+                Either::Right((Ok(err), _)) => Err(err),
+                _ => Ok(()),
+            }
+        };
+
+        // whether this is a http2 error, resp_clone will be dropped,
+        // as a result, resp will be the only pointer here, we can
+        // access try_unwrap method. just in case, If unwrap is failed,
+        // program will panic and print the Debug message.
+
+        Self {
+            fut: Box::pin(fut),
+            data_stream,
+            resp: Arc::try_unwrap(resp).unwrap(),
+        }
+    }
+
+    /// Returns an [`AsyncIter<Buffer>`] for reading data of the body.
+    pub fn body(&mut self) -> &mut AsyncIter<Vec<u8>> {
+        &mut self.data_stream
+    }
+
+    fn need_extra_close(resp: Weak<ClientHttp2Stream>) -> bool {
+        resp.upgrade()
+            .and_then(|resp| {
+                resp.session().close();
+                Some(true)
+            })
+            .unwrap_or(false)
+    }
+}
+
+impl Debug for ClientHttp2Stream {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&"error when unwrap ClientHttp2Stream in Http2Response::new method")
+    }
+}
+
+impl Drop for Http2Response {
+    fn drop(&mut self) {
+        #[cfg(debug_assertions)]
+        console::log2(&"response dropped: ".into(), &self.resp);
+
+        self.resp.destroy();
+    }
+}
+
+impl Future for Http2Response {
     type Output = Result<(), JsValue>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {

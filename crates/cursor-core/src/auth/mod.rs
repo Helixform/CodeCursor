@@ -22,7 +22,7 @@ use crate::{
         progress::Progress, progress_location::ProgressLocation, progress_options::ProgressOptions,
     },
     context::get_extension_context,
-    request::make_request_with_legacy,
+    request::{make_request_with_legacy, make_request_more_freedom},
 };
 
 use self::token::Token;
@@ -68,9 +68,7 @@ pub async fn sign_in() {
     }
 
     let uuid = Uuid::new_v4().to_string();
-    console::log_str(&format!("zhangzhuang uuid: {}", uuid));
     let verifier = base64_encode(random_bytes());
-    console::log_str(&format!("zhangzhuang verifier: {}", verifier));
     let challenge = base64_encode(sha256(verifier.clone()));
 
     // following this issue: https://github.com/getcursor/cursor/issues/613,
@@ -138,7 +136,7 @@ async fn polling(
     let mut interval = IntervalStream::new(2000);
 
     // I don't know which value is most suitable, just use 20
-    let mut tried = 20;
+    let mut tried = 200;
     
     loop {
         let defer_abort_future = defer_abort.clone().into_future();
@@ -148,13 +146,14 @@ async fn polling(
             }
             _ => {}
         }
-        let response = make_request_with_legacy(
-            &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
-            HttpMethod::Get,
-            false,
-        )
-        .send()
-        .await;
+        let response = make_request_more_freedom("api2.cursor.sh", &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier), HttpMethod::Get).send().await;
+        // let response = make_request_with_legacy(
+        //     &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
+        //     HttpMethod::Get,
+        //     false,
+        // )
+        // .send()
+        // .await;
 
         // for network reason, we can't get the right response in one request,
         // so we should try again when the current request is failed, otherwise

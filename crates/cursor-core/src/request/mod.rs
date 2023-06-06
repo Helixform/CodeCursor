@@ -31,6 +31,14 @@ pub fn make_request(path: &str, method: HttpMethod) -> HttpRequest {
     make_request_with_legacy(path, method, false)
 }
 
+pub fn make_request_more_freedom(host: &str, path: &str, method: HttpMethod) -> HttpRequest {
+    HttpRequest::new(&format!("https://{host}{path}"))
+    .set_method(method)
+        .add_header("accept", "*/*")
+        .add_header("content-type", "application/json")
+        .add_header("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Cursor/0.2.7 Chrome/102.0.5005.167 Electron/19.1.9 Safari/537.36")
+}
+
 pub trait JsonSendable {
     fn set_json_body<T>(self, body: &T) -> Self
     where

@@ -19,6 +19,7 @@ export class ChatServiceImpl implements IChatService {
     #clients = new Set<ChatServiceClient>();
     #currentAbortController: AbortController | null = null;
     #clearSessionScheduled = false;
+   
 
     get name(): string {
         return CHAT_SERVICE_NAME;
@@ -111,7 +112,11 @@ export class ChatServiceImpl implements IChatService {
         const selectionEndOffset = document.offsetAt(selection.end);
         const selectionRange = new SelectionRange(
             selectionStartOffset,
-            selectionEndOffset - selectionStartOffset
+            selectionEndOffset - selectionStartOffset,
+            selection.start.line,
+            selection.start.character,
+            selection.end.line,
+            selection.end.character
         );
 
         this.#addMessage({

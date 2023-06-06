@@ -9,6 +9,7 @@ import { sharedChatServiceImpl } from "./chat/chatServiceImpl";
 import { setExtensionContext, signIn, signOut } from "@crates/cursor-core";
 import { ExtensionContext } from "./context";
 import { handleGenerateProjectCommand } from "./project";
+import { getOutputChannel } from "./utils";
 
 function setHasActiveGenerateSessionContext(value: boolean) {
     vscode.commands.executeCommand(
@@ -100,6 +101,10 @@ export function activate(context: vscode.ExtensionContext) {
             new ChatPanelProvider(context)
         )
     );
+
+    const channel = getOutputChannel();
+    channel.appendLine("CodeCursor OutputChannel is open, here will be the error logs");
+    channel.show(true);
 }
 
 export function deactivate() {
