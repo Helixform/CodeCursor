@@ -4,7 +4,13 @@ use futures::StreamExt;
 use node_bridge::prelude::*;
 use wasm_bindgen::{JsError, JsValue};
 
-use crate::{services::stream::make_stream, GenerateInput};
+use crate::{
+    services::{
+        flagged_chunk::{ChunkContent, FilledPrompt},
+        stream::make_stream,
+    },
+    GenerateInput,
+};
 
 use super::models::{
     conversation::{ConversationMessage, MessageType},
@@ -24,18 +30,20 @@ impl Session {
                 .map(|mut r| {
                     r.conversation
                         .push(ConversationMessage::new(MessageType::User, input.prompt()));
+                    //
+                    r.conversation
+                        .push(ConversationMessage::empty_message(MessageType::Bot));
                     r
                 })
                 .unwrap_or_else(|| RequestBody::new_with_input(input)),
-        );
+        )
+        .map(|mut r| {
+            // Add an empty bot message to the conversation.
+            r.conversation
+                .push(ConversationMessage::empty_message(MessageType::Bot));
+            r
+        });
         self.request_body.as_ref().unwrap()
-    }
-
-    fn push_message(&mut self, msg_type: MessageType, message: String) {
-        let message = ConversationMessage::new(msg_type, message);
-        self.request_body
-            .as_mut()
-            .map(|r| r.conversation.push(message));
     }
 
     fn push_bot_message(&mut self, message: String) {
@@ -46,10 +54,6 @@ impl Session {
             })
         });
     }
-
-    fn push_user_message(&mut self, message: String) {
-        self.push_message(MessageType::User, message);
-    }
 }
 
 impl Session {
@@ -59,11 +63,9 @@ impl Session {
 
     pub async fn send_message(&mut self, input: &GenerateInput) -> Result<(), JsValue> {
         let request_body = self.body_with_input(input);
-        // Add an empty bot message to the conversation.
-        // self.push_message(MessageType::Bot, "".to_owned());
 
         #[cfg(debug_assertions)]
-        console::log_str(&serde_json::to_string(request_body).unwrap());
+        console::log_str(&serde_json::to_string_pretty(request_body).unwrap());
 
         let mut state = make_stream("/aiserver.v1.AiService/StreamChat", request_body).await?;
         let result_stream = input.result_stream();
@@ -81,17 +83,24 @@ impl Session {
                 if data.is_empty() {
                     continue;
                 }
-                #[cfg(debug_assertions)]
-                console::log_str(&data);
-                result_stream.write(&data);
-                message.push_str(&data);
+                if let Ok(prompt) = serde_json::from_str::<FilledPrompt>(&data) {
+                    #[cfg(debug_assertions)]
+                    console::log_str(&format!("prompt: \n{}", prompt.text));
+                    continue;
+                } else if let Ok(ChunkContent { text, .. }) =
+                    serde_json::from_str::<ChunkContent>(&data)
+                {
+                    #[cfg(debug_assertions)]
+                    console::log_str(&format!("wrote: {}", text));
+                    result_stream.write(&text);
+                    message.push_str(&data);
+                }
             }
         }
 
         state.complete().await?;
         result_stream.end();
 
-        self.push_user_message(input.prompt());
         self.push_bot_message(message);
 
         Ok(())

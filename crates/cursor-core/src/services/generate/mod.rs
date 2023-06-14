@@ -1,31 +1,25 @@
 mod request_body;
 
-use std::pin::pin;
+use std::{future::IntoFuture, pin::pin};
 
-use futures::StreamExt;
-use node_bridge::prelude::console;
-use serde::Deserialize;
-use wasm_bindgen::{JsError, JsValue};
+use futures::{
+    future::{select, Either},
+    StreamExt,
+};
+use node_bridge::{futures::Defer, prelude::*};
+use wasm_bindgen::{prelude::*, JsError, JsValue};
 
 use crate::GenerateInput;
 
 use self::request_body::RequestBody;
 
-use super::stream::make_stream;
+use super::{
+    flagged_chunk::{ChunkContent, FilledPrompt},
+    stream::make_stream,
+};
 
 #[derive(Debug, Clone)]
 pub struct CodeGenerateService;
-
-#[derive(Debug, Clone, Deserialize)]
-struct FilledPrompt {
-    #[serde(rename = "filledPrompt")]
-    pub text: String,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-struct ChunkContent {
-    pub text: String,
-}
 
 impl CodeGenerateService {
     pub async fn generate(input: &GenerateInput) -> Result<(), JsValue> {
@@ -75,4 +69,26 @@ impl CodeGenerateService {
 
         Ok(())
     }
+}
+
+#[wasm_bindgen(js_name = generateCode)]
+pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
+    let defer_abort = Defer::new();
+    let defer_abort_clone = defer_abort.clone();
+    let abort_signal = input.abort_signal();
+    abort_signal.add_event_listener(
+        "abort",
+        closure_once!(|| {
+            defer_abort_clone.resolve(JsValue::null());
+        })
+        .into_js_value(),
+    );
+
+    let fut = CodeGenerateService::generate(input);
+
+    let x = match select(defer_abort.into_future(), Box::pin(fut)).await {
+        Either::Left(_) => Ok(()),
+        Either::Right((res, _)) => res,
+    };
+    x
 }

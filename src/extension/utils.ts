@@ -35,7 +35,10 @@ type ModelConfiguration = {
 
 export function getModelConfiguration(): ModelConfiguration {
     const config = vscode.workspace.getConfiguration("aicursor");
-    const apiKey: string | undefined = config.get("openaiApiKey", undefined);
+    let apiKey: string | undefined = config.get("openaiApiKey", undefined);
+    if (apiKey === "") {
+        apiKey = undefined;
+    }
     const model = config.get("model", "");
 
     return {

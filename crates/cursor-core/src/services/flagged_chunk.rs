@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
 pub struct FlaggedChunk {
@@ -62,6 +62,17 @@ impl FlaggedChunk {
     pub fn is_end(&self) -> bool {
         self.flag == 2
     }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ChunkContent {
+    pub text: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct FilledPrompt {
+    #[serde(rename = "filledPrompt")]
+    pub text: String,
 }
 
 #[cfg(test)]
