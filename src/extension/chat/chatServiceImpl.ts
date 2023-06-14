@@ -107,13 +107,6 @@ export class ChatServiceImpl implements IChatService {
 
         const { document, selection } = editor;
 
-        const selectionStartOffset = document.offsetAt(selection.start);
-        const selectionEndOffset = document.offsetAt(selection.end);
-        const selectionRange = new SelectionRange(
-            selectionStartOffset,
-            selectionEndOffset - selectionStartOffset
-        );
-
         this.#addMessage({
             id: "",
             contents: prompt,
@@ -152,7 +145,7 @@ export class ChatServiceImpl implements IChatService {
                     await chat(
                         prompt,
                         document,
-                        selectionRange,
+                        selection,
                         abortController.signal,
                         resultStream
                     );

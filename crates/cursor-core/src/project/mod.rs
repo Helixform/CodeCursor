@@ -6,7 +6,7 @@ use futures::{
     future::{select, Either},
     StreamExt,
 };
-use node_bridge::{bindings::AbortSignal, futures::Defer, prelude::*};
+use node_bridge::{bindings::AbortSignal, futures::Defer, http_client::HttpMethod, prelude::*};
 use serde_json::json;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -16,7 +16,7 @@ use crate::{
         progress::Progress, progress_location::ProgressLocation, progress_options::ProgressOptions,
     },
     context::get_extension_context,
-    request::stream::{make_stream_request, StreamResponseState},
+    request::{make_request, stream::StreamResponseState, JsonSendable, INTERNAL_HOST},
 };
 
 use self::handler::ProjectHandler;
@@ -66,58 +66,72 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
 
                 let task = async move {
                     let mut state: StreamResponseState =
-                        make_stream_request("/gen_project", &json!({ "description": prompt }))
+                        make_request(INTERNAL_HOST, "/gen_project", HttpMethod::Post)
+                            .set_json_body(&json!({ "description": prompt }))
                             .send()
                             .await?
                             .into();
                     let mut data_stream = state.data_stream();
                     let mut current_task = None;
                     let mut file_writer = None;
-                    while let Some(data) = data_stream.next().await {
-                        #[cfg(debug_assertions)]
-                        console::log_str(&data);
-
-                        // The start identifier of the task is in the form of: `identifier task`.
-                        // First, match the prefix of the identifier,
-                        // and then extract the specific task following it.
-                        if data.starts_with(STEP_MESSAGE) {
-                            let task = data[STEP_MESSAGE.len() + 1..].trim();
-                            current_task = Some(Task::Step(task.to_owned()));
-                        } else if data.starts_with(CREATE_MESSAGE) {
-                            let task = data[CREATE_MESSAGE.len() + 1..].trim();
-                            current_task = Some(Task::Create(format!("Creating {}", task)));
-
-                            // The title of the "create" message is a file path,
-                            // which requires creating a file based on the path.
-                            handler.create_file_recursive(task).await;
-                        } else if data.starts_with(APPEND_MESSAGE) {
-                            let task = data[APPEND_MESSAGE.len() + 1..].trim();
-                            current_task =
-                                Some(Task::Append(format!("Appending contents to {}", task)));
-
-                            file_writer = handler.make_file_writer(task);
-                        } else if data.starts_with(END_MESSAGE) {
-                            current_task = None;
-                            file_writer.as_ref().map(|w| w.end());
-                            file_writer = None;
-                        } else if data.starts_with(FINISHED_MESSAGE) {
-                            file_writer.as_ref().map(|w| w.end());
-                            break;
-                        } else {
-                            match &current_task {
-                                Some(Task::Append(_)) => {
-                                    if let Some(writer) = file_writer.as_ref() {
-                                        writer.write(&data);
-                                    }
+                    while let Some(chunk) = data_stream.next().await {
+                        // Each chunk contains multiple lines of data, which need to be separated and processed individually.
+                        for data in String::from_utf8(chunk)
+                            .map_err(|e| e.to_string())?
+                            .split('\n')
+                            .filter_map(|line| {
+                                if !line.is_empty() && line.starts_with("data: \"") {
+                                    serde_json::from_str::<String>(&line["data: ".len()..]).ok()
+                                } else {
+                                    None
                                 }
-                                _ => {}
-                            }
-                        }
+                            })
+                            .filter(|s| s != "[DONE]")
+                        {
+                            #[cfg(debug_assertions)]
+                            console::log_str(&data);
 
-                        // The message sent by the report will automatically disappear after a short period of time.
-                        // In order to keep the text displayed on the dialog box, report the title every time data is returned.
-                        if current_task.is_some() {
-                            progress.report(current_task.as_ref().unwrap().title());
+                            // The start identifier of the task is in the form of: `identifier task`.
+                            // First, match the prefix of the identifier,
+                            // and then extract the specific task following it.
+                            if data.starts_with(STEP_MESSAGE) {
+                                let task = data[STEP_MESSAGE.len() + 1..].trim();
+                                current_task = Some(Task::Step(task.to_owned()));
+                            } else if data.starts_with(CREATE_MESSAGE) {
+                                let task = data[CREATE_MESSAGE.len() + 1..].trim();
+                                current_task = Some(Task::Create(format!("Creating {}", task)));
+
+                                // The title of the "create" message is a file path,
+                                // which requires creating a file based on the path.
+                                handler.create_file_recursive(task).await;
+                            } else if data.starts_with(APPEND_MESSAGE) {
+                                let task = data[APPEND_MESSAGE.len() + 1..].trim();
+                                current_task =
+                                    Some(Task::Append(format!("Appending contents to {}", task)));
+
+                                file_writer = handler.make_file_writer(task);
+                            } else if data.starts_with(END_MESSAGE) {
+                                current_task = None;
+                                if let Some(w) = file_writer.as_ref() {
+                                    w.end()
+                                }
+                                file_writer = None;
+                            } else if data.starts_with(FINISHED_MESSAGE) {
+                                if let Some(w) = file_writer.as_ref() {
+                                    w.end()
+                                }
+                                break;
+                            } else if let Some(Task::Append(_)) = &current_task {
+                                if let Some(writer) = file_writer.as_ref() {
+                                    writer.write(&data);
+                                }
+                            }
+
+                            // The message sent by the report will automatically disappear after a short period of time.
+                            // In order to keep the text displayed on the dialog box, report the title every time data is returned.
+                            if current_task.is_some() {
+                                progress.report(current_task.as_ref().unwrap().title());
+                            }
                         }
                     }
                     drop(data_stream);

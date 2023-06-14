@@ -10,22 +10,25 @@ use futures::{
 use gloo::timers::future::IntervalStream;
 use node_bridge::{bindings::AbortSignal, futures::Defer, http_client::HttpMethod, prelude::*};
 use rand::RngCore;
+use serde::Deserialize;
+use serde_json::json;
 use sha2::Digest;
 use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{future_to_promise, spawn_local};
-
-const AUTH_TOKEN_KEY: &str = "auth_token";
 
 use crate::{
     bindings::{
         progress::Progress, progress_location::ProgressLocation, progress_options::ProgressOptions,
     },
     context::get_extension_context,
-    request::make_request_with_legacy,
+    request::{make_request, JsonSendable, API2_HOST},
 };
 
 use self::token::Token;
+
+const AUTH_TOKEN_KEY: &str = "auth_token";
+const CLIENT_ID: &str = "KbZUR41cY7W6zRSdpSUJ7I7mLYBKOCmB";
 
 fn random_bytes() -> Vec<u8> {
     let mut rng = rand::thread_rng();
@@ -40,9 +43,9 @@ where
 {
     base64::engine::general_purpose::STANDARD
         .encode(bytes)
-        .replace("+", "-")
-        .replace("/", "_")
-        .replace("=", "")
+        .replace('+', "-")
+        .replace('/', "_")
+        .replace('=', "")
 }
 
 fn sha256<T>(data: T) -> Vec<u8>
@@ -72,7 +75,7 @@ pub async fn sign_in() {
     let challenge = base64_encode(sha256(verifier.clone()));
 
     let login_url = format!(
-        "https://cursor.so/loginDeepControl?challenge={challenge}&uuid={}",
+        "https://cursor.sh/loginDeepControl?challenge={challenge}&uuid={}",
         uuid.clone()
     );
 
@@ -130,47 +133,46 @@ async fn polling(
         .into_js_value(),
     );
 
-    let mut interval = IntervalStream::new(2000);
+    let mut interval = IntervalStream::new(1000);
     loop {
         let defer_abort_future = defer_abort.clone().into_future();
-        match select(defer_abort_future, interval.next()).await {
-            Either::Left(_) => {
-                return Ok(None);
-            }
-            _ => {}
+        if let Either::Left(_) = select(defer_abort_future, interval.next()).await {
+            return Ok(None);
         }
-        let mut response = make_request_with_legacy(
+        let Ok(mut response) = make_request(
+            API2_HOST,
             &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
             HttpMethod::Get,
-            true,
         )
         .send()
-        .await?;
+        .await else {
+            // If the request fails, it means that the server is not ready yet, 
+            // so we need to continue polling.
+            continue;
+        };
+        let data = response.text().await;
 
-        if let Some(chunk) = response.body().next().await {
-            let data = chunk.to_string("utf-8");
-            #[cfg(debug_assertions)]
-            console::log_str(&data);
-            match serde_json::from_str::<serde_json::Value>(&data).and_then(|value| {
-                if value.is_null() {
-                    Ok(false)
-                } else {
-                    serde_json::from_str::<Token>(&data).map(|_| true)
+        #[cfg(debug_assertions)]
+        console::log_str(&data);
+        match serde_json::from_str::<serde_json::Value>(&data).and_then(|value| {
+            if value.is_null() {
+                Ok(false)
+            } else {
+                serde_json::from_str::<Token>(&data).map(|_| true)
+            }
+        }) {
+            Ok(flag) => {
+                if !flag {
+                    continue;
                 }
-            }) {
-                Ok(flag) => {
-                    if !flag {
-                        continue;
-                    }
-                    return Ok(Some(data));
-                }
-                Err(err) => {
-                    let js_error = JsError::new(&err.to_string());
-                    let error = js_error.into();
-                    #[cfg(debug_assertions)]
-                    console::error1(&error);
-                    return Err(error);
-                }
+                return Ok(Some(data));
+            }
+            Err(err) => {
+                let js_error = JsError::new(&err.to_string());
+                let error = js_error.into();
+                #[cfg(debug_assertions)]
+                console::error1(&error);
+                return Err(error);
             }
         }
     }
@@ -187,6 +189,49 @@ pub fn sign_out() {
     });
 }
 
+#[derive(Debug, Clone, Deserialize)]
+struct RefreshResponse {
+    pub access_token: String,
+    #[serde(rename = "expires_in")]
+    pub _expires_in: u64,
+    #[serde(rename = "scope")]
+    pub _scope: String,
+    #[serde(rename = "token_type")]
+    pub _token_type: String,
+    #[serde(rename = "id_token")]
+    pub _id_token: String,
+}
+
+#[wasm_bindgen(js_name = refreshToken)]
+pub async fn refresh() -> Result<(), JsValue> {
+    if let Some(mut token) = account_token() {
+        let response = make_request("cursor.us.auth0.com", "/oauth/token", HttpMethod::Post)
+            .set_json_body(&json!({
+                "client_id": CLIENT_ID,
+                "grant_type": "refresh_token",
+                "refresh_token": token.refresh_token,
+            }))
+            .send()
+            .await?
+            .text()
+            .await;
+        #[cfg(debug_assertions)]
+        console::log_str(&format!("refresh token response: {}", response));
+        let access_token = serde_json::from_str::<RefreshResponse>(&response)
+            .map_err(JsError::from)?
+            .access_token;
+        token.access_token = access_token;
+
+        let context = get_extension_context();
+        let storage = context.storage();
+        storage.update(
+            AUTH_TOKEN_KEY,
+            Some(&serde_json::to_string(&token).map_err(JsError::from)?),
+        );
+    }
+    Ok(())
+}
+
 pub fn account_token() -> Option<Token> {
     get_extension_context()
         .storage()
@@ -195,7 +240,7 @@ pub fn account_token() -> Option<Token> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

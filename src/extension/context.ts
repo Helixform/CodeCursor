@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import {
     IExtensionContext,
     IGlobalStorage,
+    IModelConfiguration,
     IProgress,
     RustProgressOptions,
 } from "@crates/cursor-core";
@@ -56,5 +57,19 @@ export class ExtensionContext implements IExtensionContext {
         items: string[]
     ): Thenable<string | undefined> {
         return vscode.window.showInformationMessage(message, ...items);
+    }
+
+    getModelConfiguration(): IModelConfiguration {
+        const config = vscode.workspace.getConfiguration("aicursor");
+        let apiKey: string | null = config.get("openaiApiKey", null);
+        if (apiKey === "") {
+            apiKey = null;
+        }
+        const model = config.get("model", "");
+
+        return {
+            apiKey: apiKey,
+            gptModel: model,
+        };
     }
 }

@@ -1,7 +1,11 @@
 use std::{cell::RefCell, ops::Deref};
 
-use crate::{bindings::progress_options::ProgressOptions, storage::GlobalStorage};
 use wasm_bindgen::prelude::*;
+
+use crate::{
+    bindings::progress_options::ProgressOptions, model_configuration::ModelConfiguration,
+    storage::GlobalStorage,
+};
 
 #[wasm_bindgen(typescript_custom_section)]
 const IEXTENSION_CONTEXT: &'static str = r#"
@@ -10,6 +14,7 @@ interface IExtensionContext {
     executeCommand(command: string, ...args: any[]): Thenable<any>;
     withProgress(options: RustProgressOptions, callback: () => Thenable<any>): Thenable<any>;
     showInformationMessage(message: string, items: string[]): Thenable<string | undefined>;
+    getModelConfiguration(): IModelConfiguration;
 }
 "#;
 
@@ -49,6 +54,9 @@ extern "C" {
         message: &str,
         items: js_sys::Array,
     ) -> JsValue;
+
+    #[wasm_bindgen(method, structural, js_name = getModelConfiguration)]
+    pub fn model_configuration(this: &ExtensionContext) -> ModelConfiguration;
 }
 
 thread_local! {

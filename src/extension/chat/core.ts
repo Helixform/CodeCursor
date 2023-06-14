@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
 
 import { ResultStream } from "../generate/resultStream";
-import { SelectionRange } from "../generate/core";
-import { getCustomModelConfiguration } from "../utils";
+import { Position, SelectionRange } from "../generate/core";
 import {
     chat as rustChat,
     resetChat as rustResetChat,
@@ -13,7 +12,7 @@ let isProcessing = false;
 export async function chat(
     prompt: string,
     document: vscode.TextDocument,
-    selectionRange: SelectionRange,
+    selection: vscode.Selection,
     abortSignal: AbortSignal,
     resultStream: ResultStream<String>
 ): Promise<void> {
@@ -26,8 +25,6 @@ export async function chat(
         vscode.workspace.getWorkspaceFolder(document.uri)?.uri.fsPath ?? null;
     const documentText = document.getText();
 
-    const customModelConfig = getCustomModelConfiguration();
-
     try {
         isProcessing = true;
         await rustChat({
@@ -35,11 +32,14 @@ export async function chat(
             documentText,
             filePath,
             workspaceDirectory,
-            selectionRange,
+            selectionRange: new SelectionRange(selection),
             resultStream,
             abortSignal,
-            apiKey: customModelConfig?.openaiAPIKey || null,
-            gptModel: customModelConfig?.model || null,
+            cursor: new Position(
+                selection.active.line,
+                selection.active.character
+            ),
+            languageId: document.languageId,
         });
     } finally {
         isProcessing = false;

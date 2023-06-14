@@ -1,27 +1,48 @@
 import * as vscode from "vscode";
 
 import { ResultStream } from "./resultStream";
-import { getCustomModelConfiguration } from "../utils";
 import {
     generateCode as rustGenerateCode,
     ISelectionRange,
+    IPosition,
 } from "@crates/cursor-core";
 
 export class SelectionRange implements ISelectionRange {
-    private _offset: number;
-    private _length: number;
+    private _start: Position;
+    private _end: Position;
 
-    constructor(offset: number, length: number) {
-        this._offset = offset;
-        this._length = length;
+    constructor(selection: vscode.Selection) {
+        this._start = new Position(
+            selection.start.line,
+            selection.start.character
+        );
+        this._end = new Position(selection.end.line, selection.end.character);
     }
 
-    get offset(): number {
-        return this._offset;
+    get start(): Position {
+        return this._start;
     }
 
-    get length(): number {
-        return this._length;
+    get end(): Position {
+        return this._end;
+    }
+}
+
+export class Position implements IPosition {
+    private _line: number;
+    private _character: number;
+
+    constructor(line: number, character: number) {
+        this._line = line;
+        this._character = character;
+    }
+
+    get line(): number {
+        return this._line;
+    }
+
+    get character(): number {
+        return this._character;
     }
 }
 
@@ -29,6 +50,7 @@ export async function generateCode(
     prompt: string,
     document: vscode.TextDocument,
     selectionRange: SelectionRange,
+    cursor: Position,
     cancellationToken: vscode.CancellationToken,
     resultStream: ResultStream<String>
 ): Promise<void> {
@@ -43,8 +65,6 @@ export async function generateCode(
     });
     const { signal: abortSignal } = abortController;
 
-    const customModelConfig = getCustomModelConfiguration();
-
     await rustGenerateCode({
         prompt,
         documentText,
@@ -53,7 +73,7 @@ export async function generateCode(
         selectionRange,
         resultStream,
         abortSignal,
-        apiKey: customModelConfig?.openaiAPIKey || null,
-        gptModel: customModelConfig?.model || null,
+        cursor,
+        languageId: document.languageId,
     });
 }

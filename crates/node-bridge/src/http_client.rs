@@ -5,6 +5,7 @@ use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use futures::future::{select, Either};
+use futures::StreamExt;
 use js_sys::{Object as JsObject, Reflect};
 use wasm_bindgen::prelude::*;
 
@@ -51,7 +52,7 @@ pub struct HttpRequest {
     url: String,
     method: HttpMethod,
     headers: HashMap<String, String>,
-    body: Option<String>,
+    body: Option<Vec<u8>>,
 }
 
 impl HttpRequest {
@@ -78,9 +79,12 @@ impl HttpRequest {
         self
     }
 
-    /// Sets the body string.
-    pub fn set_body(mut self, body: String) -> Self {
-        self.body = Some(body);
+    /// Sets the request body.
+    pub fn set_body<T>(mut self, body: Option<T>) -> Self
+    where
+        T: AsRef<[u8]>,
+    {
+        self.body = body.map(|b| b.as_ref().to_vec());
         self
     }
 
@@ -129,7 +133,7 @@ impl HttpRequest {
 
         // Send the request with an optional body.
         if let Some(body) = self.body {
-            let body_buf = Buffer::from_str(&body, "utf-8");
+            let body_buf = Buffer::from_bytes(&body);
             req.write(body_buf);
         }
         req.end();
@@ -228,6 +232,15 @@ impl HttpResponse {
     /// Returns an [`AsyncIter<Buffer>`] for reading data of the body.
     pub fn body(&mut self) -> &mut AsyncIter<Buffer> {
         &mut self.data_stream
+    }
+
+    /// Returns the body as a string.
+    pub async fn text(&mut self) -> String {
+        self.body()
+            .map(|chunk| chunk.to_string("utf-8"))
+            .collect::<Vec<_>>()
+            .await
+            .join("")
     }
 }
 

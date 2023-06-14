@@ -36,6 +36,7 @@
 .chat-msg-contents {
     padding: 0 16px;
     user-select: text;
+    line-height: 1.3;
     -webkit-user-select: text;
     -webkit-user-drag: auto;
 }

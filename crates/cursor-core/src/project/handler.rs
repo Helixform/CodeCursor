@@ -3,7 +3,7 @@ use wasm_bindgen::prelude::*;
 #[wasm_bindgen(typescript_custom_section)]
 const IPROJECT_HANDLER: &'static str = r#"
 interface IProjectHandler {
-    async createFileRecursive(path: string): void;
+    createFileRecursive(path: string): Promise<void>;
     makeFileWriter(path: string): IProjectFileWriter | undefined;
 }
 "#;

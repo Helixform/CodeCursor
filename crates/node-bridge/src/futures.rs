@@ -46,6 +46,12 @@ impl Defer {
     }
 }
 
+impl Default for Defer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IntoFuture for Defer {
     type Output = Result<JsValue, JsValue>;
 
@@ -94,6 +100,12 @@ impl<T> AsyncIter<T> {
         AsyncIterSender {
             inner: Rc::clone(&self.inner),
         }
+    }
+}
+
+impl<T> Default for AsyncIter<T> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

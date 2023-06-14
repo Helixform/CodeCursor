@@ -1,3 +1,4 @@
+mod models;
 mod session;
 
 use std::cell::RefCell;
@@ -12,7 +13,7 @@ use crate::GenerateInput;
 use session::Session;
 
 enum SharedSessionState {
-    Available(Option<Session>),
+    Available(Option<Box<Session>>),
     Occupied,
 }
 

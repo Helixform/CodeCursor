@@ -1,12 +1,16 @@
 import * as vscode from "vscode";
 import * as crypto from "crypto";
-import * as fs from "node:fs";
 
 import { GenerateSession, getScratchpadManager } from "./generate";
 import { getGlobalState } from "./globalState";
 import { ChatPanelProvider } from "./chat/chatPanelProvider";
 import { sharedChatServiceImpl } from "./chat/chatServiceImpl";
-import { setExtensionContext, signIn, signOut } from "@crates/cursor-core";
+import {
+    refreshToken,
+    setExtensionContext,
+    signIn,
+    signOut,
+} from "@crates/cursor-core";
 import { ExtensionContext } from "./context";
 import { handleGenerateProjectCommand } from "./project";
 
@@ -100,6 +104,10 @@ export function activate(context: vscode.ExtensionContext) {
             new ChatPanelProvider(context)
         )
     );
+
+    // TODO: No need to refresh the token every time.
+    // If the token is still valid, there is no need to refresh it.
+    refreshToken();
 }
 
 export function deactivate() {
