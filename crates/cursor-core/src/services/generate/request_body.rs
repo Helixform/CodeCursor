@@ -17,9 +17,6 @@ pub struct RequestBody {
     #[serde(rename = "workspaceRootPath")]
     pub root_path: String,
 
-    #[serde(rename = "apiKey", skip_serializing_if = "Option::is_none")]
-    pub api_key: Option<String>,
-
     #[serde(rename = "explicitContext")]
     pub context: ExplicitContext,
 }
@@ -38,9 +35,9 @@ impl RequestBody {
             model_details: ModelDetails {
                 name: input.gpt_model(),
                 ghost_mode: true,
+                api_key: input.api_key(),
             },
             root_path: input.workspace_directory().unwrap_or_default(),
-            api_key: input.api_key(),
             context: ExplicitContext {},
         }
     }
