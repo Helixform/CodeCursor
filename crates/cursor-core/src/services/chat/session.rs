@@ -6,7 +6,7 @@ use wasm_bindgen::{JsError, JsValue};
 
 use crate::{
     services::{
-        flagged_chunk::{ChunkContent, FilledPrompt},
+        enveloped_message::{FilledPrompt, MessageContent},
         stream::make_stream,
     },
     GenerateInput,
@@ -88,8 +88,8 @@ impl Session {
                     #[cfg(debug_assertions)]
                     console::log_str(&format!("prompt: \n{}", prompt.text));
                     continue;
-                } else if let Ok(ChunkContent { text, .. }) =
-                    serde_json::from_str::<ChunkContent>(&data)
+                } else if let Ok(MessageContent { text, .. }) =
+                    serde_json::from_str::<MessageContent>(&data)
                 {
                     #[cfg(debug_assertions)]
                     console::log_str(&format!("wrote: {}", text));

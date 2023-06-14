@@ -139,7 +139,7 @@ async fn polling(
         if let Either::Left(_) = select(defer_abort_future, interval.next()).await {
             return Ok(None);
         }
-        let Ok(mut response)= make_request(
+        let Ok(mut response) = make_request(
             API2_HOST,
             &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
             HttpMethod::Get,

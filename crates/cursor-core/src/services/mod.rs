@@ -1,4 +1,4 @@
 pub mod chat;
-mod flagged_chunk;
+mod enveloped_message;
 pub mod generate;
 mod stream;

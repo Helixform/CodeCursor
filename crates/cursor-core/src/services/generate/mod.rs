@@ -14,7 +14,7 @@ use crate::GenerateInput;
 use self::request_body::RequestBody;
 
 use super::{
-    flagged_chunk::{ChunkContent, FilledPrompt},
+    enveloped_message::{FilledPrompt, MessageContent},
     stream::make_stream,
 };
 
@@ -53,8 +53,8 @@ impl CodeGenerateService {
                     #[cfg(debug_assertions)]
                     console::log_str(&format!("prompt: \n{}", prompt.text));
                     continue;
-                } else if let Ok(ChunkContent { text, .. }) =
-                    serde_json::from_str::<ChunkContent>(&data)
+                } else if let Ok(MessageContent { text, .. }) =
+                    serde_json::from_str::<MessageContent>(&data)
                 {
                     #[cfg(debug_assertions)]
                     console::log_str(&format!("wrote: {}", text));
@@ -86,7 +86,6 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
 
     let fut = CodeGenerateService::generate(input);
 
-    
     match select(defer_abort.into_future(), Box::pin(fut)).await {
         Either::Left(_) => Ok(()),
         Either::Right((res, _)) => res,

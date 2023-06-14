@@ -13,7 +13,7 @@ use crate::{
     request::{make_request, API2_HOST},
 };
 
-use super::flagged_chunk::FlaggedChunk;
+use super::enveloped_message::EnvelopedMessage;
 
 const SIGN_IN_ITEM: &str = "Sign In / Sign Up";
 const CONFIGURE_API_KEY_ITEM: &str = "Configure API Key";
@@ -27,10 +27,10 @@ impl StreamResponseState {
         Self { response }
     }
 
-    pub fn data_stream(&mut self) -> impl Stream<Item = FlaggedChunk> + '_ {
+    pub fn data_stream(&mut self) -> impl Stream<Item = EnvelopedMessage> + '_ {
         self.response.body().filter_map(|chunk| async move {
             let bytes = Uint8Array::new(&chunk).to_vec();
-            FlaggedChunk::decode(bytes).ok()
+            EnvelopedMessage::decode(bytes).ok()
         })
     }
 
@@ -83,10 +83,10 @@ where
         return Err(JsError::new("No API key or account token").into());
     }
 
-    let chunk =
-        FlaggedChunk::new_with_serializable(&body, 0).map_err(|e| JsError::new(&e.to_string()))?;
+    let chunk = EnvelopedMessage::new_with_serializable(&body, 0)
+        .map_err(|e| JsError::new(&e.to_string()))?;
     // The data will always end with an empty data block flagged as 2.
-    let body = [chunk, FlaggedChunk::end()]
+    let body = [chunk, EnvelopedMessage::end()]
         .into_iter()
         .map(|d| d.encode())
         .reduce(|a, b| {
