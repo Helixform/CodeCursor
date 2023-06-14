@@ -6,7 +6,7 @@ use futures::{
     future::{select, Either},
     StreamExt,
 };
-use node_bridge::{bindings::AbortSignal, futures::Defer, prelude::*};
+use node_bridge::{bindings::AbortSignal, futures::Defer, http_client::HttpMethod, prelude::*};
 use serde_json::json;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::future_to_promise;
@@ -16,7 +16,7 @@ use crate::{
         progress::Progress, progress_location::ProgressLocation, progress_options::ProgressOptions,
     },
     context::get_extension_context,
-    request::stream::{make_stream_request, StreamResponseState},
+    request::{make_request, stream::StreamResponseState, JsonSendable, INTERNAL_HOST},
 };
 
 use self::handler::ProjectHandler;
@@ -66,7 +66,8 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
 
                 let task = async move {
                     let mut state: StreamResponseState =
-                        make_stream_request("/gen_project", &json!({ "description": prompt }))
+                        make_request(INTERNAL_HOST, "/gen_project", HttpMethod::Post)
+                            .set_json_body(&json!({ "description": prompt }))
                             .send()
                             .await?
                             .into();

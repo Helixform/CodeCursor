@@ -7,11 +7,13 @@ use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::spawn_local;
 
-use crate::{auth::account_token, context::get_extension_context, request::make_request};
+use crate::{
+    auth::account_token,
+    context::get_extension_context,
+    request::{make_request, API2_HOST},
+};
 
 use super::flagged_chunk::FlaggedChunk;
-
-const API_HOST: &str = "api2.cursor.sh";
 
 const SIGN_IN_ITEM: &str = "Sign In / Sign Up";
 const CONFIGURE_API_KEY_ITEM: &str = "Configure API Key";
@@ -47,7 +49,7 @@ pub async fn make_stream<T>(path: &str, body: &T) -> Result<StreamResponseState,
 where
     T: Serialize,
 {
-    let mut request = make_request(API_HOST, path, HttpMethod::Post)
+    let mut request = make_request(API2_HOST, path, HttpMethod::Post)
         .add_header("content-type", "application/connect+json");
 
     if let Some(token) = account_token() {

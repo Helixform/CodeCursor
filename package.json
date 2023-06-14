@@ -80,6 +80,12 @@
                 "command": "aicursor.configureApiKey",
                 "title": "Configure API Key",
                 "category": "CodeCursor"
+            },
+            {
+                "command": "aicursor.generateProject",
+                "title": "Generate Project",
+                "enablement": "workspaceFolders != null && workspaceFolderCount > 0",
+                "category": "CodeCursor"
             }
         ],
         "viewsContainers": {

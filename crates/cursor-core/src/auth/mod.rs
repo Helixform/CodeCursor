@@ -17,18 +17,18 @@ use uuid::Uuid;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::{future_to_promise, spawn_local};
 
-const AUTH_TOKEN_KEY: &str = "auth_token";
-const CLIENT_ID: &str = "KbZUR41cY7W6zRSdpSUJ7I7mLYBKOCmB";
-
 use crate::{
     bindings::{
         progress::Progress, progress_location::ProgressLocation, progress_options::ProgressOptions,
     },
     context::get_extension_context,
-    request::{make_request, make_request_with_legacy, JsonSendable},
+    request::{make_request, JsonSendable, API2_HOST},
 };
 
 use self::token::Token;
+
+const AUTH_TOKEN_KEY: &str = "auth_token";
+const CLIENT_ID: &str = "KbZUR41cY7W6zRSdpSUJ7I7mLYBKOCmB";
 
 fn random_bytes() -> Vec<u8> {
     let mut rng = rand::thread_rng();
@@ -142,7 +142,8 @@ async fn polling(
             }
             _ => {}
         }
-        let data = make_request_with_legacy(
+        let data = make_request(
+            API2_HOST,
             &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
             HttpMethod::Get,
         )
