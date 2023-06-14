@@ -105,6 +105,8 @@ export function activate(context: vscode.ExtensionContext) {
         )
     );
 
+    // TODO: No need to refresh the token every time.
+    // If the token is still valid, there is no need to refresh it.
     refreshToken();
 }
 
