@@ -48,9 +48,10 @@ impl Session {
 
     fn push_bot_message(&mut self, message: String) {
         self.request_body.as_mut().map(|r| {
-            r.conversation.last_mut().map(|m| match m.message_type {
-                MessageType::Bot => m.text = message,
-                _ => {}
+            r.conversation.last_mut().map(|m| {
+                if let MessageType::Bot = m.message_type {
+                    m.text = message
+                }
             })
         });
     }

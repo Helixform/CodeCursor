@@ -57,7 +57,7 @@ where
         request = request.add_header("Authorization", &format!("Bearer {}", token.access_token));
     } else if context.model_configuration().api_key().is_none() {
         spawn_local(async move {
-            match context
+            if let Some(pick) = context
                 .show_information_message(
                     "You have to sign in / sign up or configure API key to use Cursor AI features",
                     [SIGN_IN_ITEM, CONFIGURE_API_KEY_ITEM]
@@ -68,19 +68,16 @@ where
                 .await
                 .as_string()
             {
-                Some(pick) => {
-                    context
-                        .execute_command0(&format!(
-                            "aicursor.{}",
-                            if pick == SIGN_IN_ITEM {
-                                "signInUp"
-                            } else {
-                                "configureApiKey"
-                            }
-                        ))
-                        .await;
-                }
-                None => {}
+                context
+                    .execute_command0(&format!(
+                        "aicursor.{}",
+                        if pick == SIGN_IN_ITEM {
+                            "signInUp"
+                        } else {
+                            "configureApiKey"
+                        }
+                    ))
+                    .await;
             }
         });
         return Err(JsError::new("No API key or account token").into());

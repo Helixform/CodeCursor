@@ -78,9 +78,9 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
                         // Each chunk contains multiple lines of data, which need to be separated and processed individually.
                         for data in String::from_utf8(chunk)
                             .map_err(|e| e.to_string())?
-                            .split("\n")
+                            .split('\n')
                             .filter_map(|line| {
-                                if line.len() > 0 && line.starts_with("data: \"") {
+                                if !line.is_empty() && line.starts_with("data: \"") {
                                     serde_json::from_str::<String>(&line["data: ".len()..]).ok()
                                 } else {
                                     None
@@ -112,19 +112,18 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
                                 file_writer = handler.make_file_writer(task);
                             } else if data.starts_with(END_MESSAGE) {
                                 current_task = None;
-                                file_writer.as_ref().map(|w| w.end());
+                                if let Some(w) = file_writer.as_ref() {
+                                    w.end()
+                                }
                                 file_writer = None;
                             } else if data.starts_with(FINISHED_MESSAGE) {
-                                file_writer.as_ref().map(|w| w.end());
+                                if let Some(w) = file_writer.as_ref() {
+                                    w.end()
+                                }
                                 break;
-                            } else {
-                                match &current_task {
-                                    Some(Task::Append(_)) => {
-                                        if let Some(writer) = file_writer.as_ref() {
-                                            writer.write(&data);
-                                        }
-                                    }
-                                    _ => {}
+                            } else if let Some(Task::Append(_)) = &current_task {
+                                if let Some(writer) = file_writer.as_ref() {
+                                    writer.write(&data);
                                 }
                             }
 

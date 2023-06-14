@@ -56,7 +56,7 @@ impl FlaggedChunk {
 
 impl FlaggedChunk {
     pub fn end() -> Self {
-        Self::new(&[], 2)
+        Self::new([], 2)
     }
 
     pub fn is_end(&self) -> bool {
@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn test_encode_decode() -> Result<()> {
         let bytes = [1u8, 2, 3, 4];
-        let result = FlaggedChunk::new(&bytes, 1).encode();
+        let result = FlaggedChunk::new(bytes, 1).encode();
         assert_eq!(result, vec![1, 0, 0, 0, 4, 1, 2, 3, 4]);
 
         let data = FlaggedChunk::decode(result)?;

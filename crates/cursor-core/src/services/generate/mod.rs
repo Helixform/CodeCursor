@@ -86,9 +86,9 @@ pub async fn generate_code(input: &GenerateInput) -> Result<(), JsValue> {
 
     let fut = CodeGenerateService::generate(input);
 
-    let x = match select(defer_abort.into_future(), Box::pin(fut)).await {
+    
+    match select(defer_abort.into_future(), Box::pin(fut)).await {
         Either::Left(_) => Ok(()),
         Either::Right((res, _)) => res,
-    };
-    x
+    }
 }

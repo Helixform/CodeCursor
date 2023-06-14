@@ -130,8 +130,8 @@ impl GenerateInput {
     pub fn file_dir(&self) -> String {
         let file_path = self.file_path();
         return file_path
-            .split("/")
-            .take(file_path.split("/").count() - 1)
+            .split('/')
+            .take(file_path.split('/').count() - 1)
             .collect::<Vec<&str>>()
             .join("/");
     }

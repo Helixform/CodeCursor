@@ -43,9 +43,9 @@ where
 {
     base64::engine::general_purpose::STANDARD
         .encode(bytes)
-        .replace("+", "-")
-        .replace("/", "_")
-        .replace("=", "")
+        .replace('+', "-")
+        .replace('/', "_")
+        .replace('=', "")
 }
 
 fn sha256<T>(data: T) -> Vec<u8>
@@ -136,11 +136,8 @@ async fn polling(
     let mut interval = IntervalStream::new(1000);
     loop {
         let defer_abort_future = defer_abort.clone().into_future();
-        match select(defer_abort_future, interval.next()).await {
-            Either::Left(_) => {
-                return Ok(None);
-            }
-            _ => {}
+        if let Either::Left(_) = select(defer_abort_future, interval.next()).await {
+            return Ok(None);
         }
         let Ok(mut response)= make_request(
             API2_HOST,
@@ -221,7 +218,7 @@ pub async fn refresh() -> Result<(), JsValue> {
         #[cfg(debug_assertions)]
         console::log_str(&format!("refresh token response: {}", response));
         let access_token = serde_json::from_str::<RefreshResponse>(&response)
-            .map_err(|e| JsError::from(e))?
+            .map_err(JsError::from)?
             .access_token;
         token.access_token = access_token;
 
@@ -229,7 +226,7 @@ pub async fn refresh() -> Result<(), JsValue> {
         let storage = context.storage();
         storage.update(
             AUTH_TOKEN_KEY,
-            Some(&serde_json::to_string(&token).map_err(|e| JsError::from(e))?),
+            Some(&serde_json::to_string(&token).map_err(JsError::from)?),
         );
     }
     Ok(())
