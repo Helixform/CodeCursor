@@ -14,7 +14,7 @@ We believe there are more developers actively use Visual Studio Code as their ma
 
 You have to sign in the Cursor account or configure you own API keys to use this extension. Please refer to the [Custom API Keys](#custom-api-keys) section for details.
 
-### 🌟 **Experimental**: Generate entire projects with the AI 🌟 (Not Available for Now)
+### 🌟 **Experimental**: Generate entire projects with the AI 🌟
 
 We bring the experimental features of Cursor's latest AI-generated projects to CodeCursor. Now you can directly create entire projects through AI in VSCode.
 
