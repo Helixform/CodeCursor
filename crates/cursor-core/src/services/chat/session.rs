@@ -30,9 +30,6 @@ impl Session {
                 .map(|mut r| {
                     r.conversation
                         .push(ConversationMessage::new(MessageType::User, input.prompt()));
-                    //
-                    r.conversation
-                        .push(ConversationMessage::empty_message(MessageType::Bot));
                     r
                 })
                 .unwrap_or_else(|| RequestBody::new_with_input(input)),
