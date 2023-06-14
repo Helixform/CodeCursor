@@ -142,15 +142,18 @@ async fn polling(
             }
             _ => {}
         }
-        let data = make_request(
+        let Ok(mut response)= make_request(
             API2_HOST,
             &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
             HttpMethod::Get,
         )
         .send()
-        .await?
-        .text()
-        .await;
+        .await else {
+            // If the request fails, it means that the server is not ready yet, 
+            // so we need to continue polling.
+            continue;
+        };
+        let data = response.text().await;
 
         #[cfg(debug_assertions)]
         console::log_str(&data);
@@ -192,10 +195,14 @@ pub fn sign_out() {
 #[derive(Debug, Clone, Deserialize)]
 struct RefreshResponse {
     pub access_token: String,
-    pub expires_in: u64,
-    pub scope: String,
-    pub token_type: String,
-    pub id_token: String,
+    #[serde(rename = "expires_in")]
+    pub _expires_in: u64,
+    #[serde(rename = "scope")]
+    pub _scope: String,
+    #[serde(rename = "token_type")]
+    pub _token_type: String,
+    #[serde(rename = "id_token")]
+    pub _id_token: String,
 }
 
 #[wasm_bindgen(js_name = refreshToken)]
@@ -236,7 +243,7 @@ pub fn account_token() -> Option<Token> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

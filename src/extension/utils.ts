@@ -27,22 +27,3 @@ export function getNonce() {
     }
     return text;
 }
-
-type ModelConfiguration = {
-    openaiAPIKey?: string;
-    model: string;
-};
-
-export function getModelConfiguration(): ModelConfiguration {
-    const config = vscode.workspace.getConfiguration("aicursor");
-    let apiKey: string | undefined = config.get("openaiApiKey", undefined);
-    if (apiKey === "") {
-        apiKey = undefined;
-    }
-    const model = config.get("model", "");
-
-    return {
-        openaiAPIKey: apiKey,
-        model,
-    };
-}

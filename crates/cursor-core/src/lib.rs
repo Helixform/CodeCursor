@@ -1,6 +1,7 @@
 pub mod auth;
 mod bindings;
 pub mod context;
+pub mod model_configuration;
 mod project;
 mod request;
 pub mod services;
@@ -44,8 +45,6 @@ interface IGenerateInput {
     get selectionRange(): ISelectionRange;
     get resultStream(): IResultStream;
     get abortSignal(): AbortSignal;
-    get apiKey(): string | null;
-    get gptModel(): string;
     get languageId(): string;
 }
 "#;
@@ -122,12 +121,6 @@ extern "C" {
 
     #[wasm_bindgen(method, getter, structural, js_name = abortSignal)]
     pub fn abort_signal(this: &GenerateInput) -> AbortSignal;
-
-    #[wasm_bindgen(method, getter, structural, js_name = apiKey)]
-    pub fn api_key(this: &GenerateInput) -> Option<String>;
-
-    #[wasm_bindgen(method, getter, structural, js_name = gptModel)]
-    pub fn gpt_model(this: &GenerateInput) -> String;
 
     #[wasm_bindgen(method, getter, structural, js_name = languageId)]
     pub fn language_id(this: &GenerateInput) -> String;

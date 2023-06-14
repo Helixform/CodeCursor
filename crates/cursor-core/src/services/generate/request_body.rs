@@ -1,6 +1,7 @@
 use serde::Serialize;
 
 use crate::{
+    context::get_extension_context,
     services::stream::models::{
         current_file::CurrentFile, explicit_context::ExplicitContext, model_details::ModelDetails,
     },
@@ -23,6 +24,8 @@ pub struct RequestBody {
 
 impl RequestBody {
     pub fn new_with_input(input: &GenerateInput) -> Self {
+        let context = get_extension_context();
+        let configuration = context.model_configuration();
         Self {
             query: input.prompt(),
             current_file: CurrentFile {
@@ -33,9 +36,9 @@ impl RequestBody {
                 cursor: input.cursor().into(),
             },
             model_details: ModelDetails {
-                name: input.gpt_model(),
+                name: configuration.model_name(),
                 ghost_mode: true,
-                api_key: input.api_key(),
+                api_key: configuration.api_key(),
             },
             root_path: input.workspace_directory().unwrap_or_default(),
             context: ExplicitContext {},

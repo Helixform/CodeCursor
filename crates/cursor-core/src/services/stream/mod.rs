@@ -52,11 +52,11 @@ where
     let mut request = make_request(API2_HOST, path, HttpMethod::Post)
         .add_header("content-type", "application/connect+json");
 
+    let context = get_extension_context();
     if let Some(token) = account_token() {
         request = request.add_header("Authorization", &format!("Bearer {}", token.access_token));
-    } else {
+    } else if context.model_configuration().api_key().is_none() {
         spawn_local(async move {
-            let context = get_extension_context();
             match context
                 .show_information_message(
                     "You have to sign in / sign up or configure API key to use Cursor AI features",

@@ -2,6 +2,7 @@ use serde::Serialize;
 use uuid::Uuid;
 
 use crate::{
+    context::get_extension_context,
     services::stream::models::{
         current_file::CurrentFile, explicit_context::ExplicitContext, model_details::ModelDetails,
     },
@@ -41,6 +42,8 @@ impl RequestBody {
                 .map(|s| s.to_string())
                 .collect(),
         });
+        let context = get_extension_context();
+        let configuration = context.model_configuration();
         Self {
             current_file: CurrentFile {
                 content: input.document_text(),
@@ -50,9 +53,9 @@ impl RequestBody {
                 cursor: input.cursor().into(),
             },
             model_details: ModelDetails {
-                name: input.gpt_model(),
+                name: configuration.model_name(),
                 ghost_mode: true,
-                api_key: input.api_key(),
+                api_key: configuration.api_key(),
             },
             root_path: input.workspace_directory().unwrap_or_default(),
             context: ExplicitContext {},
