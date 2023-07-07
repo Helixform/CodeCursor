@@ -145,11 +145,15 @@ async fn polling(
             HttpMethod::Get,
         )
         .send()
-        .await else {
-            // If the request fails, it means that the server is not ready yet, 
-            // so we need to continue polling.
+        .await
+        else {
             continue;
         };
+        if response.status_code() != 200 {
+            // If the request fails, it means that the server is not ready yet,
+            // so we need to continue polling.
+            continue;
+        }
         let data = response.text().await;
 
         #[cfg(debug_assertions)]
