@@ -57,7 +57,7 @@ impl CodeGenerateService {
                     serde_json::from_str::<MessageContent>(&data)
                 {
                     #[cfg(debug_assertions)]
-                    console::log_str(&format!("wrote: {}", text));
+                    console::log_str(&format!("wrote: {text}"));
                     result_stream.write(&text);
                 }
             }
