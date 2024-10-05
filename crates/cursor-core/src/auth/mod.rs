@@ -141,7 +141,7 @@ async fn polling(
         }
         let Ok(mut response) = make_request(
             API2_HOST,
-            &format!("/auth/poll?uuid={}&verifier={}", uuid, verifier),
+            &format!("/auth/poll?uuid={uuid}&verifier={verifier}"),
             HttpMethod::Get,
         )
         .send()
@@ -220,7 +220,7 @@ pub async fn refresh() -> Result<(), JsValue> {
             .text()
             .await;
         #[cfg(debug_assertions)]
-        console::log_str(&format!("refresh token response: {}", response));
+        console::log_str(&format!("refresh token response: {response}"));
         let access_token = serde_json::from_str::<RefreshResponse>(&response)
             .map_err(JsError::from)?
             .access_token;

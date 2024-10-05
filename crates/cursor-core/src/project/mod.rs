@@ -99,7 +99,7 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
                                 current_task = Some(Task::Step(task.to_owned()));
                             } else if data.starts_with(CREATE_MESSAGE) {
                                 let task = data[CREATE_MESSAGE.len() + 1..].trim();
-                                current_task = Some(Task::Create(format!("Creating {}", task)));
+                                current_task = Some(Task::Create(format!("Creating {task}")));
 
                                 // The title of the "create" message is a file path,
                                 // which requires creating a file based on the path.
@@ -107,7 +107,7 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
                             } else if data.starts_with(APPEND_MESSAGE) {
                                 let task = data[APPEND_MESSAGE.len() + 1..].trim();
                                 current_task =
-                                    Some(Task::Append(format!("Appending contents to {}", task)));
+                                    Some(Task::Append(format!("Appending contents to {task}")));
 
                                 file_writer = handler.make_file_writer(task);
                             } else if data.starts_with(END_MESSAGE) {
