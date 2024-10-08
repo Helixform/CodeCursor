@@ -31,17 +31,19 @@ pub enum HttpMethod {
     Delete,
 }
 
-impl ToString for HttpMethod {
-    fn to_string(&self) -> String {
-        match self {
+impl std::fmt::Display for HttpMethod {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let description = match self {
             HttpMethod::Get => "GET",
             HttpMethod::Post => "POST",
             HttpMethod::Put => "PUT",
             HttpMethod::Delete => "DELETE",
         }
-        .to_owned()
+        .to_owned();
+        write!(f, "{}", description)
     }
 }
+
 
 /// An HTTP request.
 ///

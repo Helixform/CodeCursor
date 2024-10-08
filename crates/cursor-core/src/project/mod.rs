@@ -129,8 +129,8 @@ pub async fn generate_project(prompt: &str, handler: ProjectHandler) -> Result<J
 
                             // The message sent by the report will automatically disappear after a short period of time.
                             // In order to keep the text displayed on the dialog box, report the title every time data is returned.
-                            if current_task.is_some() {
-                                progress.report(current_task.as_ref().unwrap().title());
+                            if let Some(task) = &current_task {
+                                progress.report(task.title());
                             }
                         }
                     }
