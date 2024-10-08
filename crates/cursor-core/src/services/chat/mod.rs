@@ -18,7 +18,7 @@ enum SharedSessionState {
 }
 
 thread_local! {
-    static SHARED_SESSION: RefCell<SharedSessionState> = RefCell::new(SharedSessionState::Available(None));
+    static SHARED_SESSION: RefCell<SharedSessionState> = const { RefCell::new(SharedSessionState::Available(None)) };
 }
 
 #[wasm_bindgen(js_name = resetChat)]
