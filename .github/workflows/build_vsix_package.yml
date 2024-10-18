@@ -1,40 +1,35 @@
 name: Build VSIX Package
 
 on:
-  push:
-    branches: [ "main" ]
+    push:
+        branches: ["main"]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [19.x]
+        strategy:
+            matrix:
+                node-version: [19.x]
 
-    steps:
-    - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v3
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ matrix.node-version }}
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v3
+              with:
+                  node-version: ${{ matrix.node-version }}
 
-    - name: Use Rust
-      uses: actions-rs/toolchain@v1.0.6
-      with:
-        toolchain: stable
+            - name: Prepare wasm-pack
+              uses: jetli/wasm-pack-action@v0.4.0
 
-    - name: Prepare wasm-pack
-      uses: jetli/wasm-pack-action@v0.4.0
+            - name: NPM Install
+              run: npm install
 
-    - name: NPM Install
-      run:  npm install
+            - name: Build
+              run: npm i -g vsce && vsce package
 
-    - name: Build
-      run:  npm i -g vsce && vsce package
-    
-    - name: Upload
-      uses: actions/upload-artifact@v3
-      with:
-        path: ${{ github.workspace }}/*.vsix
+            - name: Upload
+              uses: actions/upload-artifact@v3
+              with:
+                  path: ${{ github.workspace }}/*.vsix
